@@ -3,6 +3,7 @@ library(randomForest)
 library(plyr)
 library(doParallel)
 library(vegan)
+library(ggmap)
 
 # load("data/FinalForests.Rdata")
 # load("data/ibiv4.RData")
@@ -293,6 +294,14 @@ setMethod("summary", "mmi", function(object = "mmi"){
     d
   } else
     show(object)
+})
+
+setMethod("plot", "mmi", function(x = "mmi"){
+  load("data/base_map.rdata")
+  x@result$MMIScore <- cut(x@finalscore[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
+  x@result <- cbind(x@result, x@predictors[, 1:4])
+  ggmap(base_map) + 
+    geom_point(data=x@result, aes(x=New_Long, y=New_Lat, colour=MMIScore), size=4, alpha=.6)
 })
 
   
