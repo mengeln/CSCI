@@ -4,11 +4,12 @@ library(plyr)
 library(doParallel)
 library(vegan)
 
-load("data/FinalForests.Rdata")
-load("data/ibiv4.RData")
-load("data/taxonomy_v5.RData")
-load("data/Metrics.Max.Min.Rdata")
+# load("data/FinalForests.Rdata")
+# load("data/ibiv4.RData")
+# load("data/taxonomy_v5.RData")
+# load("data/Metrics.Max.Min.Rdata")
 
+###Setup###
 min <- c(Number_Coleoptera_Taxa.min.met, Number_Diptera_Taxa.min.met, Number_Scraper_Taxa.min.met,
          Number_Predator_Taxa.min.met, Number_CF___CG_Taxa.min.met, Number_ShredderTaxa.min.met,
          Percent_Intolerant_Taxa__0_2_.min.met, Percent_Non_Insecta_Taxa.min.met,
@@ -28,8 +29,9 @@ ibi <- idata.frame(ibiv4)
 
 setOldClass("randomForest.formula")
 setOldClass("idf")
-mmi <- setClass("mmi", 
-                representation(bugdata = "data.frame", 
+
+###Class Definition###
+setClass("mmi", representation(bugdata = "data.frame", 
                                taxonomy = "idf",
                                ibi = "idf",
                                cf.randomForest = "randomForest.formula",
@@ -67,8 +69,33 @@ mmi <- setClass("mmi",
                                  datalength = numeric()
                                  )
                 )
+###Validity Checks###
+setValidity("mmi", function(object){
+  bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "DistinctCode")
+  predictorcolumns <- c("StationCode", "New_Lat",     "New_Long",    "ELEV_RANGE",  "BDH_AVE",     "PPT_00_09",  
+                  "LPREM_mean",  "KFCT_AVE",    "TEMP_00_09",  "P_MEAN",      "N_MEAN",      "PRMH_AVE",   
+                  "AREA_SQKM",   "LogWSA",      "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
+                  "CaO_Mean")
+  for(i in 1:5){
+    if(!(bugcolumns[i] %in% names(object@bugdata)))
+      return(paste("'bugdata' missing column:", bugcolumns[i]))
+    if(sum(is.na(object@bugdata[, bugcolumns[i]])) != 0 & i != 5)
+      return(paste("Missing data in column", bugcolumns[i], "of 'bugdata'"))
+  }
+  for(i in 1:19){
+    if(!(predictorcolumns[i] %in% names(object@predictors)))
+      return(paste("'predictors' missing column:", predictorcolumns[i]))
+    if(sum(is.na(object@predictors[, predictorcolumns[i]])) != 0)
+      return(paste("Missing data in column", predictorcolumns[i], "of 'bugdata'"))
+    }
+  TRUE
+})
+
+###MMI Methods###
+
 setMethod("show", "mmi", function(object){
   print(head(object@bugdata))
+  cat("\n")
   print(head(object@predictors))
   })
 
@@ -118,6 +145,7 @@ setMethod("nameMatch", "mmi", function(object, effort = "SAFIT1"){
 setGeneric("subsample", function(object)
   standardGeneric("subsample"))
 setMethod("subsample", "mmi", function(object){
+  if(is.null(object@bugdata$distinct)){object <- nameMatch(object)}
   object@datalength <- length(object@bugdata)
   object@bugdata$SampleID <- as.character(object@bugdata$SampleID)
   rarifydown <- function(data){unlist(sapply(unique(data$SampleID), function(sample){
@@ -137,6 +165,7 @@ setMethod("subsample", "mmi", function(object){
 setGeneric("metrics", function(object)
   standardGeneric("metrics"))
 setMethod("metrics", "mmi", function(object){
+  if(nrow(object@subsample) == 0){object <- subsample(object)}
   object@subsample$MaxTol <- ibi$MaxTol[match(object@subsample$Taxa, object@ibi$FinalID)]
   object@subsample$MaxTol <- as.numeric(object@subsample$MaxTol)
   object@subsample$Class <- ibi$Class[match(object@subsample$Taxa, object@ibi$FinalID)]
@@ -208,6 +237,7 @@ setMethod("metrics", "mmi", function(object){
 setGeneric("randomForest", function(object)
   standardGeneric("randomForest"))
 setMethod("randomForest", "mmi", function(object){
+  if(nrow(object@metrics) == 0){object <- metrics(object)}
   object@predictors <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), object@predictors, by="StationCode")
   object@modelprediction <- as.data.frame(matrix(NA, nrow = nrow(object@predictors)))
   
@@ -227,6 +257,7 @@ setMethod("randomForest", "mmi", function(object){
 setGeneric("score", function(object)
   standardGeneric("score"))
 setMethod("score", "mmi", function(object){
+  if(nrow(object@modelprediction) == 0){object <- randomForest(object)}
   object@result <- as.data.frame(matrix(NA, nrow = length(unique(object@modelprediction$V1)), ncol = 18))
   colnames(object@result) <- c("coleoptera", "diptera", "scraper", "predator", "cfcg", "shredder",
                                "intolerant", "noninsect", "tolerance", "coleoptera_score", "diptera_score", 
@@ -247,21 +278,21 @@ setMethod("score", "mmi", function(object){
     object@result[, i + 9] <- ifelse(object@result[, i] <= 0, 0, ifelse(
       object@result[, i] >= 1, 1, object@result[, i]))
   
-  object@finalscore <- data.frame(unique(object@modelprediction$V1), apply(object@result[, 10:18], 1, mean))
+  object@finalscore <- data.frame(unique(object@modelprediction$V1), 
+                                  apply(object@result[, 10:18], 1, mean)/0.5974159)
   return(object)
   }         
 )
 
-setMethod("mean", "mmi", function(x = "mmi"){
-  score(randomForest(metrics(subsample(nameMatch(x)))))
-})
-
 setMethod("summary", "mmi", function(object = "mmi"){
-  d <- data.frame(object@finalscore, object@metrics[, 181:189], 
-                  object@modelprediction, object@result[, 9:18])
-  d <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), d, by.x="SampleID", by.y="unique.object.modelprediction.V1.")
-  colnames(d)[1:3] <- c("SampleID", "StationCode", "MMI Score")
-  d
+  if(nrow(object@result) != 0){
+    d <- data.frame(object@finalscore, object@metrics[, 181:189], 
+                    object@modelprediction, object@result[, 9:18])
+    d <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), d, by.x="SampleID", by.y="unique.object.modelprediction.V1.")
+    colnames(d)[1:3] <- c("SampleID", "StationCode", "MMI Score")
+    d
+  } else
+    show(object)
 })
 
   
