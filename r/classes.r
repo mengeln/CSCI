@@ -4,11 +4,15 @@ library(plyr)
 library(doParallel)
 library(vegan)
 library(ggmap)
+library(reshape2)
 
-# load("data/FinalForests.Rdata")
-# load("data/ibiv4.RData")
-# load("data/taxonomy_v5.RData")
-# load("data/Metrics.Max.Min.Rdata")
+load("data/FinalForests.Rdata")
+load("data/ibiv4.RData")
+load("data/taxonomy_v5.RData")
+load("data/Metrics.Max.Min.Rdata")
+load("data/otu_crosswalk.rdata")
+load("data/OE.RF.Model.Rdata")
+source("r/model.predict.RanFor.4.2.r")
 
 ###Setup###
 min <- c(Number_Coleoptera_Taxa.min.met, Number_Diptera_Taxa.min.met, Number_Scraper_Taxa.min.met,
@@ -32,8 +36,9 @@ setOldClass("randomForest.formula")
 setOldClass("idf")
 
 ###Class Definition###
-setClass("mmi", representation(bugdata = "data.frame", 
-                               taxonomy = "idf",
+setClass("bugs", representation(bugdata="data.frame",
+                                predictors="data.frame"))
+setClass("mmi", representation(taxonomy = "idf",
                                ibi = "idf",
                                cf.randomForest = "randomForest.formula",
                                coleoptera.randomForest = "randomForest.formula",
@@ -45,33 +50,57 @@ setClass("mmi", representation(bugdata = "data.frame",
                                tolerance.randomForest = "randomForest.formula",
                                subsample = "data.frame",
                                metrics = "data.frame",
-                               predictors = "data.frame",
                                modelprediction = "data.frame",
                                maxmin = "data.frame",
                                result = "data.frame",
                                finalscore = "data.frame",
                                datalength = "numeric"),
-                prototype = list(ibi = ibi,
-                                 taxonomy = taxonomy,
-                                 cf.randomForest = Number_CF___CG_Taxa.FinalForest,
-                                 coleoptera.randomForest = Number_Coleoptera_Taxa.FinalForest,
-                                 predator.randomForest = Number_Predator_Taxa.FinalForest,
-                                 scraper.randomForest = Number_Scraper_Taxa.FinalForest,
-                                 shredder.randomForest = Number_ShredderTaxa.FinalForest,
-                                 intolerant.randomForest = Percent_Intolerant_Taxa__0_2_.FinalForest,
-                                 noninsect.randomForest = Percent_Non_Insecta_Taxa.FinalForest,
-                                 tolerance.randomForest = Tolerance_Value.FinalForest,
-                                 subsample = data.frame(),
-                                 metrics = data.frame(),
-                                 residuals = data.frame(),
-                                 maxmin = maxmin,
-                                 result = data.frame(),
-                                 finalscore = data.frame(),
-                                 datalength = numeric()
-                                 )
-                )
+         contains="bugs",
+         prototype = list(ibi = ibi,
+                          taxonomy = taxonomy,
+                          cf.randomForest = Number_CF___CG_Taxa.FinalForest,
+                          coleoptera.randomForest = Number_Coleoptera_Taxa.FinalForest,
+                          predator.randomForest = Number_Predator_Taxa.FinalForest,
+                          scraper.randomForest = Number_Scraper_Taxa.FinalForest,
+                          shredder.randomForest = Number_ShredderTaxa.FinalForest,
+                          intolerant.randomForest = Percent_Intolerant_Taxa__0_2_.FinalForest,
+                          noninsect.randomForest = Percent_Non_Insecta_Taxa.FinalForest,
+                          tolerance.randomForest = Tolerance_Value.FinalForest,
+                          subsample = data.frame(),
+                          metrics = data.frame(),
+                          residuals = data.frame(),
+                          maxmin = maxmin,
+                          result = data.frame(),
+                          finalscore = data.frame(),
+                          datalength = numeric()
+         )
+)
+setClass("oe", representation(otu_crosswalk="data.frame",
+                              ambiguous="data.frame",
+                              oesubsample="data.frame",
+                              iterations="matrix",
+                              datalength="numeric",
+                              rf.mod="randomForest.formula",
+                              preds.final="character",
+                              grps.final="integer",
+                              bugcal.pa="data.frame",
+                              oeresults="data.frame"), 
+         contains="bugs",
+         prototype=list(otu_crosswalk=otu_crosswalk,
+                        ambiguous=data.frame(),
+                        oesubsample=data.frame(),
+                        datalength=numeric(),
+                        iterations=matrix(),
+                        datalength=numeric(),
+                        rf.mod=rf.mod,
+                        preds.final=preds.final,
+                        grps.final=grps.final,
+                        bugcal.pa=bugcal.pa,
+                        oeresults=data.frame()
+                        ))
+
 ###Validity Checks###
-setValidity("mmi", function(object){
+setValidity("bugs", function(object){
   bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "DistinctCode")
   predictorcolumns <- c("StationCode", "New_Lat",     "New_Long",    "ELEV_RANGE",  "BDH_AVE",     "PPT_00_09",  
                   "LPREM_mean",  "KFCT_AVE",    "TEMP_00_09",  "P_MEAN",      "N_MEAN",      "PRMH_AVE",   
@@ -94,7 +123,7 @@ setValidity("mmi", function(object){
 
 ###MMI Methods###
 
-setMethod("show", "mmi", function(object){
+setMethod("show", "bugs", function(object){
   print(head(object@bugdata))
   cat("\n")
   print(head(object@predictors))
@@ -142,6 +171,38 @@ setMethod("nameMatch", "mmi", function(object, effort = "SAFIT1"){
   object@bugdata$distinct[which(object@bugdata$distinct == "Non-distinct" & object@bugdata$DistinctCode == "Yes")] <- "Distinct" 
   return(object)
 })
+setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
+  
+  colnames(object@bugdata)[which(colnames(object@bugdata) == "FinalID")] <- "Taxa"
+  colnames(object@bugdata)[which(colnames(object@bugdata) == "BAResult")] <- "Result"
+  
+  ###Aggregate taxa###
+  object@bugdata <- ddply(object@bugdata, "SampleID", function(df){
+    ddply(df, "Taxa", function(sdf){
+      id <- unique(sdf[, !(colnames(sdf) %in% "Result")])
+      Result <- sum(sdf$Result)
+      cbind(id, Result)
+    })
+  })
+  
+  ###Match to STE###
+  object@bugdata$STE <- rep(NA, length(object@bugdata$Taxa))
+  object@bugdata$STE <- object@otu_crosswalk[match(object@bugdata$Taxa, object@otu_crosswalk$FinalID), as.character(effort)]
+  object@bugdata$STE <- as.character(object@bugdata$STE)
+  object@bugdata$STE[which(is.na(object@bugdata$STE))] <- "Missing"
+  
+  ###Calculate ambiguous###
+  percent.ambiguous <- ddply(object@bugdata, "SampleID", function(df){
+    100*sum(df$Result[df$STE == "Ambiguous"])/sum(df$Result)
+  })
+  taxa.ambiguous <- ddply(object@bugdata, "SampleID", function(df){
+    100*length(df$Taxa[df$STE == "Ambiguous"])/length(df$Taxa)
+  })
+  object@ambiguous <- merge(percent.ambiguous, taxa.ambiguous, by="SampleID")
+  names(object@ambiguous)[2:3] <- c("individuals", "taxa")
+  object@bugdata <- object@bugdata[object@bugdata$STE != "Ambiguous",]
+  return(object)
+})
 
 setGeneric("subsample", function(object)
   standardGeneric("subsample"))
@@ -160,6 +221,23 @@ setMethod("subsample", "mmi", function(object){
   }
   object@subsample <- as.data.frame(cbind(object@bugdata, rarificationresult))
   colnames(object@subsample)[(object@datalength + 1):(object@datalength + 20)]<- paste("Replicate", 1:20)
+  return(object)
+})
+setMethod("subsample", "oe", function(object){
+  if(nrow(object@ambiguous)==0){object <- nameMatch(object)}
+  object@datalength <- length(object@bugdata)
+  object@bugdata$SampleID <- as.character(object@bugdata$SampleID)
+  rarifydown <- function(data){unlist(sapply(unique(data$SampleID), function(sample){
+    v <- data[data$SampleID==sample, "Result"]
+    if(sum(v)>=400){rrarefy(v, 400)} else
+    {v}
+  }))}
+  registerDoParallel()
+  rarificationresult <- foreach(i=1:20, .combine=cbind, .packages="vegan") %dopar% {
+    rarifydown(object@bugdata)
+  }
+  object@oesubsample <- as.data.frame(cbind(object@bugdata, rarificationresult))
+  colnames(object@oesubsample)[(object@datalength + 1):(object@datalength + 20)]<- paste("Replicate", 1:20)
   return(object)
 })
 
@@ -234,7 +312,6 @@ setMethod("metrics", "mmi", function(object){
   return(object)
 })
 
-
 setGeneric("randomForest", function(object)
   standardGeneric("randomForest"))
 setMethod("randomForest", "mmi", function(object){
@@ -253,6 +330,32 @@ setMethod("randomForest", "mmi", function(object){
   object@modelprediction$tolerance <- predict(object@tolerance.randomForest, object@predictors)
   object@modelprediction$V1 <- unique(object@predictors$SampleID)
   return(object)
+})
+setMethod("randomForest", "oe", function(object){
+  if(nrow(object@oesubsample)==0){object <- subsample(object)}
+  names(object@predictors)[which(names(object@predictors) == "TEMP_00_09")] <- "AvgTemp00_09"
+  names(object@predictors)[which(names(object@predictors) == "PPT_00_09")] <- "AvgPPT00_09"
+  names(object@predictors)[which(names(object@predictors) == "LogWSA")] <- "Log_Area"
+  names(object@predictors)[which(names(object@predictors) == "SITE_ELEV")] <-  "AvgOfElevation"
+  Pc=0.5
+  rownames(object@predictors) <- object@predictors$StationCode
+  
+  iterate <- function(rep){
+    patable <- dcast(object@oesubsample[, c("StationCode", "SampleID", "STE", rep)],
+                     StationCode + SampleID ~ STE, value.var=rep, mean)
+    patable[is.na(patable)] <- 0
+    patable <- aggregate(.~ StationCode, data=patable[, c(1, 3:ncol(patable))], mean)
+    rownames(patable) <- patable$StationCode
+    iresult <- model.predict.RanFor.4.2(object@bugcal.pa, object@grps.final, object@preds.final, object@rf.mod, prednew=object@predictors,
+                                        bugnew=patable,Pc,Cal.OOB=FALSE)
+    iresult$SampleID <- unique(patable$SampleID)
+    return(iresult)
+  }
+  ilist <- lapply(paste("Replicate", 1:20), function(i)iterate(i)[, 3])
+  object@iterations <- do.call(cbind, ilist)
+  object@oeresults <- data.frame(object@predictors$StationCode, apply(object@iterations, 1, mean))
+  names(object@oeresults) <- c("StationCode", "OoverE")
+  object
 })
   
 setGeneric("score", function(object)
@@ -284,6 +387,7 @@ setMethod("score", "mmi", function(object){
   return(object)
   }         
 )
+setMethod("score", "oe", function(object)randomForest(object))
 
 setMethod("summary", "mmi", function(object = "mmi"){
   if(nrow(object@result) != 0){
@@ -295,7 +399,12 @@ setMethod("summary", "mmi", function(object = "mmi"){
   } else
     show(object)
 })
-
+setMethod("summary", "oe", function(object = "oe"){
+  if(nrow(object@oeresults) != 0){
+    object@oeresults
+  } else
+    show(object)
+})
 setMethod("plot", "mmi", function(x = "mmi"){
   load("data/base_map.rdata")
   x@result$MMIScore <- cut(x@finalscore[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
@@ -303,5 +412,11 @@ setMethod("plot", "mmi", function(x = "mmi"){
   ggmap(base_map) + 
     geom_point(data=x@result, aes(x=New_Long, y=New_Lat, colour=MMIScore), size=4, alpha=.6)
 })
-
+setMethod("plot", "oe", function(x = "oe"){
+  load("data/base_map.rdata")
+  x@result$MMIScore <- cut(x@oeresults$[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
+  x@result <- cbind(x@result, x@predictors[, 1:4])
+  ggmap(base_map) + 
+    geom_point(data=x@result, aes(x=New_Long, y=New_Lat, colour=MMIScore), size=4, alpha=.6)
+})
   
