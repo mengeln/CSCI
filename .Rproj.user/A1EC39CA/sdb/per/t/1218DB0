@@ -1,0 +1,21 @@
+{
+    "contents" : "",
+    "created" : 1348287003728.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "1218DB0",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "properties" : {
+        "contentUrl" : "content?title=Data%3A+mmi.results.table&file=6f9a12f04526406d938bc3d23ea761c2.htm",
+        "displayedObservations" : "129",
+        "displayedVariables" : 32,
+        "title" : "Data: mmi.results.table",
+        "totalObservations" : "129",
+        "variables" : "32"
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}
