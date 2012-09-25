@@ -6,7 +6,9 @@ library(vegan)
 library(ggmap)
 library(reshape2)
 
-load("data/FinalForests.Rdata")
+
+#load("data/FinalForests.Rdata")
+lazyLoad("data/forestsdb")
 load("data/ibiv4.RData")
 load("data/taxonomy_v5.RData")
 load("data/Metrics.Max.Min.Rdata")
@@ -54,7 +56,8 @@ setClass("mmi", representation(taxonomy = "idf",
                                maxmin = "data.frame",
                                result = "data.frame",
                                finalscore = "data.frame",
-                               datalength = "numeric"),
+                               datalength = "numeric",
+                               summary ="data.frame"),
          contains="bugs",
          prototype = list(ibi = ibi,
                           taxonomy = taxonomy,
@@ -72,16 +75,17 @@ setClass("mmi", representation(taxonomy = "idf",
                           maxmin = maxmin,
                           result = data.frame(),
                           finalscore = data.frame(),
-                          datalength = numeric()
+                          datalength = numeric(),
+                          summary = data.frame()
          )
 )
 setClass("oe", representation(otu_crosswalk="data.frame",
                               ambiguous="data.frame",
                               oesubsample="data.frame",
                               iterations="matrix",
+                              fulliterations="list",
                               datalength="numeric",
                               rf.mod="randomForest.formula",
-                              preds.final="character",
                               grps.final="integer",
                               bugcal.pa="data.frame",
                               oeresults="data.frame"), 
@@ -91,14 +95,16 @@ setClass("oe", representation(otu_crosswalk="data.frame",
                         oesubsample=data.frame(),
                         datalength=numeric(),
                         iterations=matrix(),
+                        fulliterations=list(),
                         datalength=numeric(),
                         rf.mod=rf.mod,
-                        preds.final=preds.final,
                         grps.final=grps.final,
                         bugcal.pa=bugcal.pa,
                         oeresults=data.frame()
                         ))
 
+setClass("metric.mean", representation(mean.metric="data.frame"),
+         contains=c("mmi", "oe"))
 ###Validity Checks###
 setValidity("bugs", function(object){
   bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "DistinctCode")
@@ -219,6 +225,8 @@ setMethod("subsample", "mmi", function(object){
   rarificationresult <- foreach(i=1:20, .combine=cbind, .packages="vegan") %dopar% {
     rarifydown(object@bugdata)
   }
+
+  closeAllConnections()
   object@subsample <- as.data.frame(cbind(object@bugdata, rarificationresult))
   colnames(object@subsample)[(object@datalength + 1):(object@datalength + 20)]<- paste("Replicate", 1:20)
   return(object)
@@ -236,6 +244,7 @@ setMethod("subsample", "oe", function(object){
   rarificationresult <- foreach(i=1:20, .combine=cbind, .packages="vegan") %dopar% {
     rarifydown(object@bugdata)
   }
+  closeAllConnections()
   object@oesubsample <- as.data.frame(cbind(object@bugdata, rarificationresult))
   colnames(object@oesubsample)[(object@datalength + 1):(object@datalength + 20)]<- paste("Replicate", 1:20)
   return(object)
@@ -338,27 +347,35 @@ setMethod("randomForest", "oe", function(object){
   names(object@predictors)[which(names(object@predictors) == "LogWSA")] <- "Log_Area"
   names(object@predictors)[which(names(object@predictors) == "SITE_ELEV")] <-  "AvgOfElevation"
   Pc=0.5
-  rownames(object@predictors) <- object@predictors$StationCode
-  
+
+  object@predictors <- merge(unique(object@oesubsample[, c("StationCode", "SampleID")]), object@predictors,
+                             by="StationCode")
+  row.names(object@predictors) <- paste(object@predictors$StationCode, "%", object@predictors$SampleID,
+                                       sep="")
   iterate <- function(rep){
     patable <- dcast(object@oesubsample[, c("StationCode", "SampleID", "STE", rep)],
                      StationCode + SampleID ~ STE, value.var=rep, mean)
     patable[is.na(patable)] <- 0
-    patable <- aggregate(.~ StationCode, data=patable[, c(1, 3:ncol(patable))], mean)
-    rownames(patable) <- patable$StationCode
-    iresult <- model.predict.RanFor.4.2(object@bugcal.pa, object@grps.final, object@preds.final, object@rf.mod, prednew=object@predictors,
-                                        bugnew=patable,Pc,Cal.OOB=FALSE)
+    row.names(patable) <- paste(patable$StationCode, "%", patable$SampleID, sep="")
+    iresult <- model.predict.RanFor.4.2(object@bugcal.pa, object@grps.final, c("AvgTemp00_09", "Log_Area", "AvgPPT00_09", "AvgOfElevation"),
+                                        object@rf.mod, prednew=object@predictors, bugnew=patable,Pc,Cal.OOB=FALSE)
     iresult$SampleID <- unique(patable$SampleID)
     return(iresult)
   }
-  ilist <- lapply(paste("Replicate", 1:20), function(i)iterate(i)[, 3])
-  object@iterations <- do.call(cbind, ilist)
-  object@oeresults <- data.frame(object@predictors$StationCode, apply(object@iterations, 1, mean))
-  names(object@oeresults) <- c("StationCode", "OoverE")
+  object@fulliterations <- lapply(paste("Replicate", 1:20), function(i)iterate(i))
+  labels <- strsplit(row.names(object@fulliterations[[1]]), "%")
+  labels <- as.data.frame(matrix(unlist(labels), nrow=length(labels), byrow=T))
+  object@fulliterations <- lapply(object@fulliterations, function(l){
+    row.names(l)<-labels[, 2]
+    l
+    })
+  object@iterations <- do.call(cbind, lapply(object@fulliterations, function(l)l$OoverE))
+  object@oeresults <- data.frame(labels, apply(object@iterations, 1, mean))
+  names(object@oeresults) <- c("StationCode", "SampleID", "OoverE")
   object
 })
   
-setGeneric("score", function(object)
+setGeneric("score", function(object, object2)
   standardGeneric("score"))
 setMethod("score", "mmi", function(object){
   if(nrow(object@modelprediction) == 0){object <- randomForest(object)}
@@ -384,6 +401,12 @@ setMethod("score", "mmi", function(object){
   
   object@finalscore <- data.frame(unique(object@modelprediction$V1), 
                                   apply(object@result[, 10:18], 1, mean)/0.5974159)
+  d <- data.frame(object@finalscore, object@metrics[, 181:189], 
+                  object@modelprediction, object@result[, 9:18])
+  d <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), d, by.x="SampleID", by.y="unique.object.modelprediction.V1.")
+  colnames(d)[1:3] <- c("SampleID", "StationCode", "MMI Score")
+  object@summary <- d
+
   return(object)
   }         
 )
@@ -391,11 +414,7 @@ setMethod("score", "oe", function(object)randomForest(object))
 
 setMethod("summary", "mmi", function(object = "mmi"){
   if(nrow(object@result) != 0){
-    d <- data.frame(object@finalscore, object@metrics[, 181:189], 
-                    object@modelprediction, object@result[, 9:18])
-    d <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), d, by.x="SampleID", by.y="unique.object.modelprediction.V1.")
-    colnames(d)[1:3] <- c("SampleID", "StationCode", "MMI Score")
-    d
+    object@summary
   } else
     show(object)
 })
@@ -414,9 +433,61 @@ setMethod("plot", "mmi", function(x = "mmi"){
 })
 setMethod("plot", "oe", function(x = "oe"){
   load("data/base_map.rdata")
-  x@result$MMIScore <- cut(x@oeresults$[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
+  x@result$MMIScore <- cut(x@oeresults[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
   x@result <- cbind(x@result, x@predictors[, 1:4])
   ggmap(base_map) + 
     geom_point(data=x@result, aes(x=New_Long, y=New_Lat, colour=MMIScore), size=4, alpha=.6)
 })
-  
+
+setMethod("initialize", "metric.mean", function(.Object="metric.mean", x="mmi", y="oe"){
+  for(i in names(getSlots("mmi"))){
+    slot(.Object, i) <- slot(x, i)
+  }
+  for(i in names(getSlots("oe"))){
+    slot(.Object, i) <- slot(y, i)
+  }
+  .Object@mean.metric <- merge(y@oeresults, x@summary[, 1:3])
+  .Object@mean.metric$Hybrid <- apply(.Object@mean.metric[, c("OoverE", "MMI Score")], 1, mean)
+  .Object
+})
+
+setMethod("summary", "metric.mean", function(object = "metric.mean", report="basic"){
+  if(report %in% c("basic", "standard", "detailed", "complete")){
+    object@mean.metric$Count <- ddply(object@bugdata, "SampleID", function(df)sum(df$Result))[, 2]
+    object@mean.metric$Pcnt_Ambiguous_Individuals <- object@ambiguous$individuals
+    object@mean.metric$Num_Ambiguous_Taxa <- object@ambiguous$taxa
+    object@mean.metric$flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
+                                      "Adequate", "Inadequate")
+    object@mean.metric <- object@mean.metric[, c(1:2, 6:9, 3:5)]
+  }
+  if(report %in% c("standard", "detailed", "complete")){
+    object@mean.metric$mmi_flag <- ifelse(object@mean.metric$Count >=450, "Adequate", "Inadequate")
+    object@mean.metric$ambig_count_flag <- ifelse(object@mean.metric$Pcnt_Ambiguous_Individuals < 20, "Adequate", "Inadequate")
+    object@mean.metric$ambig_taxa_flag <- ifelse(object@mean.metric$Num_Ambiguous_Taxa < 25, "Adequate", "Inadequate")
+    object@mean.metric <- object@mean.metric[, c(1:6, 10:12, 7:9)]
+  }
+  if(report %in% c("detailed", "complete")){
+    names(object@result)[1:9] <- paste(names(object@result)[1:9], "_", "metric", sep="")
+    names(object@modelprediction) <- paste(names(object@modelprediction), "_", "predicted_metric", sep="")
+    object@mean.metric <- cbind(object@mean.metric, object@result, object@modelprediction[2:9])
+    object@mean.metric$Expected_capture <- apply(do.call(cbind, lapply(object@fulliterations, function(l)l$E)), 1, mean)
+    object@mean.metric$Observed_taxa <- apply(do.call(cbind, lapply(object@fulliterations, function(l)l$O)), 1, mean)
+  }
+  if(report == "complete"){
+    list(object@mean.metric, object@subsample, object@oesubsample, do.call(cbind, object@fulliterations))
+  } else
+  if(!(report %in% c("basic", "standard", "detailed"))){
+    stop("Allowed values for report: 'basic', 'standard', 'detailed', 'complete'")
+  } else
+    object@mean.metric
+})
+
+setMethod("plot", "metric.mean", function(x="metric.mean"){
+  load("data/base_map.rdata")
+  x@mean.metric$HybridScore <- cut(x@mean.metric$Hybrid, breaks=c(0, .4, .8, 1.5), labels=c("low", "medium", "high"))
+  hscore <- cbind(x@mean.metric$HybridScore, x@predictors[, 1:4])
+  names(hscore)[1] <- "HybridScore"
+  ggmap(base_map) + 
+    geom_point(data=hscore, aes(x=New_Long, y=New_Lat, colour=HybridScore), size=4, alpha=.6)
+})
+

@@ -1,0 +1,15 @@
+{
+    "contents" : "source(\"r/classes.r\")\nbugs <- read.csv(\"validation/bugs_mmi.csv\")\npred <- read.csv(\"validation/predictors_mmi.csv\")\n\nmmi_data <- new(\"mmi\", bugdata = bugs, predictors = pred)\n\nmmiresults <- score(mmi_data)\nmmi.results.table <- summary(mmiresults)\nView(mmi.results.table)\n\noe_data <- new(\"oe\", bugdata = bugs, predictors = pred)\n\noeresults <- score(oe_data)\noe.results.table <- summary(oeresults)\nView(oe.results.table)\n",
+    "created" : 1348286245783.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "557799829",
+    "id" : "416F9EF",
+    "lastKnownWriteTime" : 1348291398,
+    "path" : "~/bug_mmi/bug_mmi/r/run_mmi.r",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}
