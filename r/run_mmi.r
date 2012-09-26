@@ -1,5 +1,10 @@
-source("r/classes.r")
-bugs <- read.csv("validation/bugs_mmi.csv")
+library(devtools)
+build("hybridindex")
+
+install.packages("hybridindex_1.0.tar.gz", repos=NULL, type="binary")
+library(hybridindex)
+
+bugs <- read.csv("validation/bugs_mmi.csv", strip.white=T)
 pred <- read.csv("validation/predictors_mmi.csv")
 
 mmi_data <- new("mmi", bugdata = bugs, predictors = pred)

@@ -5,101 +5,50 @@ library(doParallel)
 library(vegan)
 library(ggmap)
 library(reshape2)
+library(RSQLite)
 
-
-#load("data/FinalForests.Rdata")
+load("data/base_map.rdata")
 lazyLoad("data/forestsdb")
-load("data/ibiv4.RData")
-load("data/taxonomy_v5.RData")
-load("data/Metrics.Max.Min.Rdata")
-load("data/otu_crosswalk.rdata")
-load("data/OE.RF.Model.Rdata")
 source("r/model.predict.RanFor.4.2.r")
-
-###Setup###
-min <- c(Number_Coleoptera_Taxa.min.met, Number_Diptera_Taxa.min.met, Number_Scraper_Taxa.min.met,
-         Number_Predator_Taxa.min.met, Number_CF___CG_Taxa.min.met, Number_ShredderTaxa.min.met,
-         Percent_Intolerant_Taxa__0_2_.min.met, Percent_Non_Insecta_Taxa.min.met,
-         Tolerance_Value.min.met
-         )
-max <- c(Number_Coleoptera_Taxa.max.met, Number_Diptera_Taxa.max.met, Number_Scraper_Taxa.max.met,
-         Number_Predator_Taxa.max.met, Number_CF___CG_Taxa.max.met, Number_ShredderTaxa.max.met,
-         Percent_Intolerant_Taxa__0_2_.max.met, Percent_Non_Insecta_Taxa.max.met,
-         Tolerance_Value.max.met
-         )
-maxminlabels <- c("coleoptera", "diptera", "scraper", "predator", "cfcg", "shredder",
-                  "intolerant", "noninsect", "tolerance")
-maxmin <- data.frame(maxminlabels, max, min)
-
-taxonomy <- idata.frame(taxonomy_v5)
-ibi <- idata.frame(ibiv4)
 
 setOldClass("randomForest.formula")
 setOldClass("idf")
 
 ###Class Definition###
 setClass("bugs", representation(bugdata="data.frame",
-                                predictors="data.frame"))
-setClass("mmi", representation(taxonomy = "idf",
-                               ibi = "idf",
-                               cf.randomForest = "randomForest.formula",
-                               coleoptera.randomForest = "randomForest.formula",
-                               predator.randomForest = "randomForest.formula",
-                               scraper.randomForest = "randomForest.formula",
-                               shredder.randomForest = "randomForest.formula",
-                               intolerant.randomForest = "randomForest.formula",
-                               noninsect.randomForest = "randomForest.formula",
-                               tolerance.randomForest = "randomForest.formula",
-                               subsample = "data.frame",
+                                predictors="data.frame",
+                                dbconn="SQLiteConnection"),
+         prototype=list(dbconn = dbConnect("SQLite", "data/bug_metadata.db")))
+setClass("mmi", representation(subsample = "data.frame",
                                metrics = "data.frame",
                                modelprediction = "data.frame",
-                               maxmin = "data.frame",
                                result = "data.frame",
                                finalscore = "data.frame",
                                datalength = "numeric",
                                summary ="data.frame"),
          contains="bugs",
-         prototype = list(ibi = ibi,
-                          taxonomy = taxonomy,
-                          cf.randomForest = Number_CF___CG_Taxa.FinalForest,
-                          coleoptera.randomForest = Number_Coleoptera_Taxa.FinalForest,
-                          predator.randomForest = Number_Predator_Taxa.FinalForest,
-                          scraper.randomForest = Number_Scraper_Taxa.FinalForest,
-                          shredder.randomForest = Number_ShredderTaxa.FinalForest,
-                          intolerant.randomForest = Percent_Intolerant_Taxa__0_2_.FinalForest,
-                          noninsect.randomForest = Percent_Non_Insecta_Taxa.FinalForest,
-                          tolerance.randomForest = Tolerance_Value.FinalForest,
-                          subsample = data.frame(),
+         prototype = list(subsample = data.frame(),
                           metrics = data.frame(),
                           residuals = data.frame(),
-                          maxmin = maxmin,
                           result = data.frame(),
                           finalscore = data.frame(),
                           datalength = numeric(),
                           summary = data.frame()
          )
 )
-setClass("oe", representation(otu_crosswalk="data.frame",
-                              ambiguous="data.frame",
+setClass("oe", representation(ambiguous="data.frame",
                               oesubsample="data.frame",
                               iterations="matrix",
                               fulliterations="list",
                               datalength="numeric",
-                              rf.mod="randomForest.formula",
-                              grps.final="integer",
-                              bugcal.pa="data.frame",
                               oeresults="data.frame"), 
          contains="bugs",
-         prototype=list(otu_crosswalk=otu_crosswalk,
-                        ambiguous=data.frame(),
+         prototype=list(ambiguous=data.frame(),
                         oesubsample=data.frame(),
                         datalength=numeric(),
                         iterations=matrix(),
                         fulliterations=list(),
                         datalength=numeric(),
-                        rf.mod=rf.mod,
-                        grps.final=grps.final,
-                        bugcal.pa=bugcal.pa,
                         oeresults=data.frame()
                         ))
 
@@ -152,21 +101,30 @@ setMethod("nameMatch", "mmi", function(object, effort = "SAFIT1"){
   })
   
   ###Match to STE###
+  ibi <- dbGetQuery(object@dbconn, "SELECT * FROM ibi")
   object@bugdata$STE <- rep(NA, length(object@bugdata$Taxa))
-  object@bugdata$STE <- object@ibi[match(object@bugdata$Taxa, object@ibi$FinalID), as.character(effort)]
+  object@bugdata$STE <- ibi[match(object@bugdata$Taxa, ibi$FinalID), as.character(effort)]
   object@bugdata$STE <- as.character(object@bugdata$STE)
+  if(length(object@bugdata$STE[which(is.na(object@bugdata$STE))] > 0)){
+    warning(paste("The following taxa were not found in the database:",
+                  paste(as.character(object@bugdata$Taxa[which(is.na(object@bugdata$STE))]),
+                        collapse=" ", sep=" , ")))
+  }
   object@bugdata$STE[which(is.na(object@bugdata$STE))] <- "Missing"
   
+  
   ###Determine Distinctiveness###
+  taxonomy <- dbGetQuery(object@dbconn, "SELECT * FROM taxonomy")
   distinctsorter <- function(taxon, data){
-    level <- object@taxonomy$TaxonomicLevelCode[match(taxon, object@taxonomy$FinalID)] 
-    levelname <- as.character(object@taxonomy$TaxonomicLevelName[match(taxon, object@taxonomy$FinalID)])
-    samelevel <- object@taxonomy$FinalID[which(taxonomy[, levelname] == taxon)]
-    matchedlevel <- object@bugdata$STE %in% object@ibi$CustomSTE[match(samelevel, object@ibi$FinalID)]
-    result <- object@taxonomy$TaxonomicLevelCode[match(data$STE[matchedlevel], object@taxonomy$FinalID)] > level
+    level <- taxonomy$TaxonomicLevelCode[match(taxon, taxonomy$FinalID)] 
+    levelname <- as.character(taxonomy$TaxonomicLevelName[match(taxon, taxonomy$FinalID)])
+    if(is.na(levelname))return(T)
+    samelevel <- taxonomy$FinalID[which(taxonomy[, levelname] == taxon)]
+    matchedlevel <- object@bugdata$STE %in% ibi$CustomSTE[match(samelevel, ibi$FinalID)]
+    result <- taxonomy$TaxonomicLevelCode[match(data$STE[matchedlevel], taxonomy$FinalID)] > level
     length(which(result)) != 0
   }
-  
+
   distinctlist <- dlply(object@bugdata, "SampleID", function(df){
     sapply(1:nrow(df), function(i){
       ifelse(distinctsorter(df$STE[i], df), "Non-Distinct", "Distinct")
@@ -192,8 +150,9 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   })
   
   ###Match to STE###
+  otu_crosswalk <- dbGetQuery(object@dbconn, "SELECT * FROM otu_crosswalk")
   object@bugdata$STE <- rep(NA, length(object@bugdata$Taxa))
-  object@bugdata$STE <- object@otu_crosswalk[match(object@bugdata$Taxa, object@otu_crosswalk$FinalID), as.character(effort)]
+  object@bugdata$STE <- otu_crosswalk[match(object@bugdata$Taxa, otu_crosswalk$FinalID), as.character(effort)]
   object@bugdata$STE <- as.character(object@bugdata$STE)
   object@bugdata$STE[which(is.na(object@bugdata$STE))] <- "Missing"
   
@@ -254,11 +213,12 @@ setGeneric("metrics", function(object)
   standardGeneric("metrics"))
 setMethod("metrics", "mmi", function(object){
   if(nrow(object@subsample) == 0){object <- subsample(object)}
-  object@subsample$MaxTol <- ibi$MaxTol[match(object@subsample$Taxa, object@ibi$FinalID)]
+  ibi <- dbGetQuery(object@dbconn, "SELECT * FROM ibi")
+  object@subsample$MaxTol <- ibi$MaxTol[match(object@subsample$Taxa, ibi$FinalID)]
   object@subsample$MaxTol <- as.numeric(object@subsample$MaxTol)
-  object@subsample$Class <- ibi$Class[match(object@subsample$Taxa, object@ibi$FinalID)]
-  object@subsample$Order <- as.character(object@ibi$Order[match(object@subsample$Taxa, object@ibi$FinalID)])
-  object@subsample$FunctionalFeedingGroup <- as.character(object@ibi$FunctionalFeedingGroup[match(object@subsample$Taxa, object@ibi$FinalID)])
+  object@subsample$Class <- ibi$Class[match(object@subsample$Taxa, ibi$FinalID)]
+  object@subsample$Order <- as.character(ibi$Order[match(object@subsample$Taxa, ibi$FinalID)])
+  object@subsample$FunctionalFeedingGroup <- as.character(ibi$FunctionalFeedingGroup[match(object@subsample$Taxa, ibi$FinalID)])
   
   object@metrics <- as.data.frame(matrix(NA, nrow = length(unique(object@bugdata$SampleID)), ncol = 180))
   for(i in 1:20){
@@ -328,15 +288,15 @@ setMethod("randomForest", "mmi", function(object){
   object@predictors <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), object@predictors, by="StationCode")
   object@modelprediction <- as.data.frame(matrix(NA, nrow = nrow(object@predictors)))
   
-  object@modelprediction$coleoptera <- predict(object@coleoptera.randomForest, object@predictors)
+  object@modelprediction$coleoptera <- predict(Number_Coleoptera_Taxa.FinalForest, object@predictors)
   object@modelprediction$diptera <- object@metrics$diptera
-  object@modelprediction$scraper <- predict(object@scraper.randomForest, object@predictors)
-  object@modelprediction$predator <- predict(object@predator.randomForest, object@predictors)
-  object@modelprediction$cfcg <- predict(object@cf.randomForest, object@predictors)
-  object@modelprediction$shredder <- predict(object@shredder.randomForest, object@predictors)
-  object@modelprediction$intolerant <- predict(object@intolerant.randomForest, object@predictors)
-  object@modelprediction$noninsect <- predict(object@noninsect.randomForest, object@predictors)
-  object@modelprediction$tolerance <- predict(object@tolerance.randomForest, object@predictors)
+  object@modelprediction$scraper <- predict(Number_Scraper_Taxa.FinalForest, object@predictors)
+  object@modelprediction$predator <- predict(Number_Predator_Taxa.FinalForest, object@predictors)
+  object@modelprediction$cfcg <- predict(Number_CF___CG_Taxa.FinalForest, object@predictors)
+  object@modelprediction$shredder <- predict(Number_ShredderTaxa.FinalForest, object@predictors)
+  object@modelprediction$intolerant <- predict(Percent_Intolerant_Taxa__0_2_.FinalForest, object@predictors)
+  object@modelprediction$noninsect <- predict(Percent_Non_Insecta_Taxa.FinalForest, object@predictors)
+  object@modelprediction$tolerance <- predict(Tolerance_Value.FinalForest, object@predictors)
   object@modelprediction$V1 <- unique(object@predictors$SampleID)
   return(object)
 })
@@ -346,19 +306,30 @@ setMethod("randomForest", "oe", function(object){
   names(object@predictors)[which(names(object@predictors) == "PPT_00_09")] <- "AvgPPT00_09"
   names(object@predictors)[which(names(object@predictors) == "LogWSA")] <- "Log_Area"
   names(object@predictors)[which(names(object@predictors) == "SITE_ELEV")] <-  "AvgOfElevation"
-  Pc=0.5
-
+  bugspa <- dbGetQuery(object@dbconn, "Select * FROM bugcal_pa")
+  row.names(bugspa) <- bugspa[, 1]
+  bugspa <- bugspa[, 2:ncol(bugspa)]
+  
   object@predictors <- merge(unique(object@oesubsample[, c("StationCode", "SampleID")]), object@predictors,
                              by="StationCode")
   row.names(object@predictors) <- paste(object@predictors$StationCode, "%", object@predictors$SampleID,
                                        sep="")
   iterate <- function(rep){
-    patable <- dcast(object@oesubsample[, c("StationCode", "SampleID", "STE", rep)],
-                     StationCode + SampleID ~ STE, value.var=rep, mean)
+    patable <- dcast(data=object@oesubsample[, c("StationCode", "SampleID", "STE", rep)],
+                     StationCode + SampleID ~ STE,
+                     value.var=rep,
+                     fun.aggregate=function(x)sum(x)/length(x))
     patable[is.na(patable)] <- 0
     row.names(patable) <- paste(patable$StationCode, "%", patable$SampleID, sep="")
-    iresult <- model.predict.RanFor.4.2(object@bugcal.pa, object@grps.final, c("AvgTemp00_09", "Log_Area", "AvgPPT00_09", "AvgOfElevation"),
-                                        object@rf.mod, prednew=object@predictors, bugnew=patable,Pc,Cal.OOB=FALSE)
+    
+    iresult <- model.predict.RanFor.4.2(bugcal.pa=bugspa,
+                                        grps.final=dbGetQuery(object@dbconn, "Select * FROM grps_final")$grps_final,
+                                        preds.final=c("AvgTemp00_09", "Log_Area", "AvgPPT00_09", "AvgOfElevation"),
+                                        ranfor.mod=rf.mod,
+                                        prednew=object@predictors,
+                                        bugnew=patable,
+                                        Pc=0.5,
+                                        Cal.OOB=FALSE)
     iresult$SampleID <- unique(patable$SampleID)
     return(iresult)
   }
@@ -379,21 +350,22 @@ setGeneric("score", function(object, object2)
   standardGeneric("score"))
 setMethod("score", "mmi", function(object){
   if(nrow(object@modelprediction) == 0){object <- randomForest(object)}
+  maxmin <- dbGetQuery(object@dbconn, "SELECT * FROM maxmin")
   object@result <- as.data.frame(matrix(NA, nrow = length(unique(object@modelprediction$V1)), ncol = 18))
   colnames(object@result) <- c("coleoptera", "diptera", "scraper", "predator", "cfcg", "shredder",
                                "intolerant", "noninsect", "tolerance", "coleoptera_score", "diptera_score", 
                                "scraper_score", "predator_score", "cfcg_score", "shredder_score", "intolerant_score", 
                                "noninsect_score", "tolerance_score")
   for(i in c(1, 3:7)){
-    object@result[, i] <- (object@metrics[, 180 + i] - object@modelprediction[, i+1] - maxmin[i, 3]) /
-      (maxmin[i, 2] - maxmin[i, 3])
+    object@result[, i] <- (object@metrics[, 180 + i] - object@modelprediction[, i+1] - maxmin[i, 4]) /
+      (maxmin[i, 3] - maxmin[i, 4])
   } 
-  object@result$diptera <- (object@modelprediction$diptera -  maxmin[2, 3]) /
-    (maxmin[2, 2] - maxmin[2, 3])
-  object@result$noninsect <- (object@metrics$noninsect - object@modelprediction$noninsect - maxmin[i, 2]) /
-    (maxmin[i, 3] - maxmin[i, 2])
-  object@result$tolerance <- (object@metrics$tolerance - object@modelprediction$tolerance - maxmin[i, 2]) /
-    (maxmin[i, 3] - maxmin[i, 2])
+  object@result$diptera <- (object@modelprediction$diptera -  maxmin[2, 4]) /
+    (maxmin[2, 3] - maxmin[2, 4])
+  object@result$noninsect <- (object@metrics$noninsect - object@modelprediction$noninsect - maxmin[8, 3]) /
+    (maxmin[8, 4] - maxmin[8, 3])
+  object@result$tolerance <- (object@metrics$tolerance - object@modelprediction$tolerance - maxmin[9, 3]) /
+    (maxmin[9, 4] - maxmin[9, 3])
   
   for(i in 1:9)
     object@result[, i + 9] <- ifelse(object@result[, i] <= 0, 0, ifelse(

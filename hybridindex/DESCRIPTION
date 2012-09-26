@@ -1,0 +1,10 @@
+Package: hybridindex
+Type: Package
+Title: Tools for California Freshwater Biotic Assessment
+Version: 1.0
+Date: 2012-09-26
+Author: MW Engeln
+Maintainer: <rmazor@sccwrp.org>
+Description: Contains tools for calculating biotic integrity from taxonomic count data. Includes methods for a mutlitmetric index and observed over expected index. A mapping function is also included that will plot station results over a California base map.
+License: MIT
+Depends: methods, randomForest, doParallel, vegan, ggmap, RSQLite

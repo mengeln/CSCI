@@ -1,0 +1,26 @@
+import(methods)
+import(randomForest)
+import(plyr)
+import(doParallel)
+import(vegan)
+import(ggmap)
+import(reshape2)
+import(RSQLite)
+exportMethods(
+    "initialize",
+    "metrics",
+    "nameMatch",
+    "plot",
+    "rforest",
+    "score",
+    "show",
+    "subsample",
+    "summary" 
+)
+exportClasses(
+    "bugs",
+     "metric.mean",
+     "mmi",
+     "oe" 
+)
+
