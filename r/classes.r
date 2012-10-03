@@ -425,23 +425,23 @@ setMethod("initialize", "metric.mean", function(.Object="metric.mean", x="mmi", 
 
 setMethod("summary", "metric.mean", function(object = "metric.mean", report="basic"){
   if(report %in% c("basic", "standard", "detailed", "complete")){
-    object@mean.metric$Count <- ddply(object@bugdata, "SampleID", function(df)sum(df$Result))[, 2]
+    object@mean.metric$Count <- ddply(object@subsample, "SampleID", function(df)sum(df$Result))[, 2]
     object@mean.metric$Pcnt_Ambiguous_Individuals <- object@ambiguous$individuals
-    object@mean.metric$Num_Ambiguous_Taxa <- object@ambiguous$taxa
-    object@mean.metric$flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
+    object@mean.metric$Pcnt_Ambiguous_Taxa <- object@ambiguous$taxa
+    object@mean.metric$overall_flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
                                       "Adequate", "Inadequate")
     object@mean.metric <- object@mean.metric[, c(1:2, 6:9, 3:5)]
   }
   if(report %in% c("standard", "detailed", "complete")){
-    object@mean.metric$mmi_flag <- ifelse(object@mean.metric$Count >=450, "Adequate", "Inadequate")
+    object@mean.metric$mmi_count_flag <- ifelse(object@mean.metric$Count >=450, "Adequate", "Inadequate")
     object@mean.metric$ambig_count_flag <- ifelse(object@mean.metric$Pcnt_Ambiguous_Individuals < 20, "Adequate", "Inadequate")
-    object@mean.metric$ambig_taxa_flag <- ifelse(object@mean.metric$Num_Ambiguous_Taxa < 25, "Adequate", "Inadequate")
-    object@mean.metric <- object@mean.metric[, c(1:6, 10:12, 7:9)]
+    #object@mean.metric$ambig_taxa_flag <- ifelse(object@mean.metric$Pcnt_Ambiguous_Taxa < 25, "Adequate", "Inadequate")
+    object@mean.metric <- object@mean.metric[, c(1:6, 10:11, 7:9)]
   }
   if(report %in% c("detailed", "complete")){
-    names(object@result)[1:9] <- paste(names(object@result)[1:9], "_", "metric", sep="")
+    names(object@metrics)[181:189] <- paste(names(object@metrics)[181:189], "_", "metric", sep="")
     names(object@modelprediction) <- paste(names(object@modelprediction), "_", "predicted_metric", sep="")
-    object@mean.metric <- cbind(object@mean.metric, object@result, object@modelprediction[2:9])
+    object@mean.metric <- cbind(object@mean.metric, object@metrics[, 181:189], object@result[, 10:18], object@modelprediction[2:9])
     object@mean.metric$Expected_capture <- apply(do.call(cbind, lapply(object@fulliterations, function(l)l$E)), 1, mean)
     object@mean.metric$Observed_taxa <- apply(do.call(cbind, lapply(object@fulliterations, function(l)l$O)), 1, mean)
   }
