@@ -6,6 +6,7 @@ library(vegan)
 library(ggmap)
 library(reshape2)
 library(RSQLite)
+library(stringr)
 
 load("data/base_map.rdata")
 lazyLoad("data/forestsdb")
@@ -59,7 +60,7 @@ setValidity("bugs", function(object){
   bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "DistinctCode")
   predictorcolumns <- c("StationCode", "New_Lat",     "New_Long",    "ELEV_RANGE",  "BDH_AVE",     "PPT_00_09",  
                   "LPREM_mean",  "KFCT_AVE",    "TEMP_00_09",  "P_MEAN",      "N_MEAN",      "PRMH_AVE",   
-                  "AREA_SQKM",   "LogWSA",      "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
+                  "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
                   "CaO_Mean")
   for(i in 1:5){
     if(!(bugcolumns[i] %in% names(object@bugdata)))
@@ -67,15 +68,72 @@ setValidity("bugs", function(object){
     if(sum(is.na(object@bugdata[, bugcolumns[i]])) != 0 & i != 5)
       return(paste("Missing data in column", bugcolumns[i], "of 'bugdata'"))
   }
-  for(i in 1:19){
+  for(i in 1:17){
     if(!(predictorcolumns[i] %in% names(object@predictors)))
       return(paste("'predictors' missing column:", predictorcolumns[i]))
     if(sum(is.na(object@predictors[, predictorcolumns[i]])) != 0)
       return(paste("Missing data in column", predictorcolumns[i], "of 'bugdata'"))
     }
+  if(!("AREA_SQKM" %in% names(object@predictors)) & !("LogWSA" %in% names(object@predictors)))
+    return("Predictors must include a column AREA_SQKM or LogWSA")
+  if(!setequal(object@bugdata$StationCode, object@predictors$StationCode))
+    return("All StationCode IDs must be represented in both bug and predictor data")
+  if(length(unique(object@bugdata$SampleID)) != nrow(unique(object@bugdata[, c("StationCode", "SampleID")])))
+    return("SampleIDs must be unique to one StationCode")
   TRUE
 })
-
+setValidity("mmi", function(object){
+  bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "DistinctCode")
+  predictorcolumns <- c("StationCode", "New_Lat",     "New_Long",    "ELEV_RANGE",  "BDH_AVE",     "PPT_00_09",  
+                        "LPREM_mean",  "KFCT_AVE",    "TEMP_00_09",  "P_MEAN",      "N_MEAN",      "PRMH_AVE",   
+                        "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
+                        "CaO_Mean")
+  for(i in 1:5){
+    if(!(bugcolumns[i] %in% names(object@bugdata)))
+      return(paste("'bugdata' missing column:", bugcolumns[i]))
+    if(sum(is.na(object@bugdata[, bugcolumns[i]])) != 0 & i != 5)
+      return(paste("Missing data in column", bugcolumns[i], "of 'bugdata'"))
+  }
+  for(i in 1:17){
+    if(!(predictorcolumns[i] %in% names(object@predictors)))
+      return(paste("'predictors' missing column:", predictorcolumns[i]))
+    if(sum(is.na(object@predictors[, predictorcolumns[i]])) != 0)
+      return(paste("Missing data in column", predictorcolumns[i], "of 'bugdata'"))
+  }
+  if(!("AREA_SQKM" %in% names(object@predictors)) & !("LogWSA" %in% names(object@predictors)))
+    return("Predictors must include a column AREA_SQKM or LogWSA")
+  if(!setequal(object@bugdata$StationCode, object@predictors$StationCode))
+    return("All StationCode IDs must be represented in both bug and predictor data")
+  if(length(unique(object@bugdata$SampleID)) != nrow(unique(object@bugdata[, c("StationCode", "SampleID")])))
+    return("SampleIDs must be unique to one StationCode")
+  TRUE
+})
+setValidity("oe", function(object){
+  bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult")
+  predictorcolumns <- c("StationCode", "New_Lat",     "New_Long",    "ELEV_RANGE",  "BDH_AVE",     "PPT_00_09",  
+                        "LPREM_mean",  "KFCT_AVE",    "TEMP_00_09",  "P_MEAN",      "N_MEAN",      "PRMH_AVE",   
+                        "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
+                        "CaO_Mean")
+  for(i in 1:4){
+    if(!(bugcolumns[i] %in% names(object@bugdata)))
+      return(paste("'bugdata' missing column:", bugcolumns[i]))
+    if(sum(is.na(object@bugdata[, bugcolumns[i]])) != 0 & i != 5)
+      return(paste("Missing data in column", bugcolumns[i], "of 'bugdata'"))
+  }
+  for(i in 1:17){
+    if(!(predictorcolumns[i] %in% names(object@predictors)))
+      return(paste("'predictors' missing column:", predictorcolumns[i]))
+    if(sum(is.na(object@predictors[, predictorcolumns[i]])) != 0)
+      return(paste("Missing data in column", predictorcolumns[i], "of 'bugdata'"))
+  }
+  if(!("AREA_SQKM" %in% names(object@predictors)) & !("LogWSA" %in% names(object@predictors)))
+    return("Predictors must include a column AREA_SQKM or LogWSA")
+  if(!setequal(object@bugdata$StationCode, object@predictors$StationCode))
+    return("All StationCode IDs must be represented in both bug and predictor data")
+  if(length(unique(object@bugdata$SampleID)) != nrow(unique(object@bugdata[, c("StationCode", "SampleID")])))
+    return("SampleIDs must be unique to one StationCode")
+  TRUE
+})
 ###MMI Methods###
 
 setMethod("show", "bugs", function(object){
@@ -91,6 +149,8 @@ setMethod("nameMatch", "mmi", function(object, effort = "SAFIT1"){
   colnames(object@bugdata)[which(colnames(object@bugdata) == "FinalID")] <- "Taxa"
   colnames(object@bugdata)[which(colnames(object@bugdata) == "BAResult")] <- "Result"
   
+  ###Clean data###
+  object@bugdata$Taxa <- str_trim(object@bugdata$Taxa) 
   ###Aggregate taxa###
   object@bugdata <- ddply(object@bugdata, "SampleID", function(df){
     ddply(df, "Taxa", function(sdf){
@@ -140,6 +200,8 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   colnames(object@bugdata)[which(colnames(object@bugdata) == "FinalID")] <- "Taxa"
   colnames(object@bugdata)[which(colnames(object@bugdata) == "BAResult")] <- "Result"
   
+  ###Clean data###
+  object@bugdata$Taxa <- str_trim(object@bugdata$Taxa)
   ###Aggregate taxa###
   object@bugdata <- ddply(object@bugdata, "SampleID", function(df){
     ddply(df, "Taxa", function(sdf){
@@ -288,6 +350,9 @@ setMethod("randomForest", "mmi", function(object){
   object@predictors <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), object@predictors, by="StationCode")
   object@modelprediction <- as.data.frame(matrix(NA, nrow = nrow(object@predictors)))
   
+  if(is.null(object@predictors$LogWSA))
+    object@predictors$LogWSA <- log10(object@predictors$AREA_SQKM)
+    
   object@modelprediction$coleoptera <- predict(Number_Coleoptera_Taxa.FinalForest, object@predictors)
   object@modelprediction$diptera <- object@metrics$diptera
   object@modelprediction$scraper <- predict(Number_Scraper_Taxa.FinalForest, object@predictors)
@@ -302,10 +367,17 @@ setMethod("randomForest", "mmi", function(object){
 })
 setMethod("randomForest", "oe", function(object){
   if(nrow(object@oesubsample)==0){object <- subsample(object)}
+  
+  if(!("LogWSA" %in% names(object@predictors)))
+    object@predictors$LogWSA <- log10(object@predictors$AREA_SQKM)
+  
   names(object@predictors)[which(names(object@predictors) == "TEMP_00_09")] <- "AvgTemp00_09"
   names(object@predictors)[which(names(object@predictors) == "PPT_00_09")] <- "AvgPPT00_09"
   names(object@predictors)[which(names(object@predictors) == "LogWSA")] <- "Log_Area"
   names(object@predictors)[which(names(object@predictors) == "SITE_ELEV")] <-  "AvgOfElevation"
+  
+
+
   bugspa <- dbGetQuery(object@dbconn, "Select * FROM bugcal_pa")
   row.names(bugspa) <- bugspa[, 1]
   bugspa <- bugspa[, 2:ncol(bugspa)]
