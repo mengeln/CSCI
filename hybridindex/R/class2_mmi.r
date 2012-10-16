@@ -1,4 +1,4 @@
-lazyLoad("data/forestsdb")
+lazyLoad("hybridindex/data/forestsdb")
 
 setClass("mmi", representation(subsample = "data.frame",
                                metrics = "data.frame",
