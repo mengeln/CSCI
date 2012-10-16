@@ -11,7 +11,7 @@ exportMethods(
     "metrics",
     "nameMatch",
     "plot",
-    "rforest",
+    "rForest",
     "score",
     "show",
     "subsample",
@@ -19,8 +19,8 @@ exportMethods(
 )
 exportClasses(
     "bugs",
-     "metric.mean",
      "mmi",
-     "oe" 
+     "oe",
+     "metricMean"
 )
 
