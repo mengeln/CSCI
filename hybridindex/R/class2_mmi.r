@@ -1,4 +1,4 @@
-lazyLoad("hybridindex/data/forestsdb")
+lazyLoad(paste(system.file("data", package="hybridindex"), "/forestsdb", sep=""))
 
 setClass("mmi", representation(subsample = "data.frame",
                                metrics = "data.frame",
@@ -230,7 +230,7 @@ setMethod("summary", "mmi", function(object = "mmi"){
 })
 
 setMethod("plot", "mmi", function(x = "mmi"){
-  load("data/base_map.rdata")
+  load(system.file("data", "base_map.rdata", package="hybridindex"))
   x@result$MMIScore <- cut(x@finalscore[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
   x@result <- cbind(x@result, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
   ggmap(base_map) + 

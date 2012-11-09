@@ -50,10 +50,13 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="basic
 })
 
 setMethod("plot", "metricMean", function(x="metricMean"){
-  load("data/base_map.rdata")
+  load(system.file("data", "base_map.rdata", package="hybridindex"))
   x@mean.metric$HybridScore <- cut(x@mean.metric$Hybrid, breaks=c(0, .4, .8, 1.5), labels=c("low", "medium", "high"))
-  hscore <- cbind(x@mean.metric$HybridScore, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
+  hscore <- cbind(x@mean.metric$HybridScore, x@mean.metric$Hybrid, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
   names(hscore)[1] <- "HybridScore"
+  names(hscore)[2] <- "Hybrid"
   ggmap(base_map) + 
-    geom_point(data=hscore, aes(x=New_Long, y=New_Lat, colour=HybridScore), size=4, alpha=.6)
+    geom_point(data=hscore, aes(x=New_Long, y=New_Lat, colour=Hybrid), size=4, alpha=.8) + 
+    scale_color_continuous(low="red", high="green", name="Hybrid Index Score") + labs(x="", y="")
 })
+

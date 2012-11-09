@@ -1,7 +1,7 @@
 setClass("bugs", representation(bugdata="data.frame",
                                 predictors="data.frame",
                                 dbconn="SQLiteConnection"),
-         prototype=list(dbconn = dbConnect("SQLite", "hybridindex/data/bug_metadata.db"))
+         #prototype=list(dbconn = dbConnect("SQLite", "hybridindex/data/bug_metadata.db"))
          )
 
 setValidity("bugs", function(object){

@@ -137,7 +137,7 @@ setMethod("summary", "oe", function(object = "oe"){
 })
 
 setMethod("plot", "oe", function(x = "oe"){
-  load("data/base_map.rdata")
+  load(system.file("data", "base_map.rdata", package="hybridindex"))
   x@result$MMIScore <- cut(x@oeresults[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
   x@result <- cbind(x@result, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
   ggmap(base_map) + 
