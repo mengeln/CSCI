@@ -11,7 +11,7 @@ setValidity("bugs", function(object){
 setMethod("initialize", "bugs", function(.Object="bugs", bugdata=data.frame(), predictors=data.frame()){
   .Object@bugdata <- bugdata
   .Object@predictors <- predictors
-  .Object@dbconn <- dbConnect("SQLite", system.file("data", "bug_metadata.db", package="hybridindex"))
+  .Object@dbconn <- dbConnect("SQLite", system.file("data", "bug_metadata.db", package="CSCI"))
   .Object
 })
 

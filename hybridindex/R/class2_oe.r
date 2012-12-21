@@ -76,25 +76,12 @@ setMethod("subsample", "oe", function(object){
 
 setMethod("rForest", "oe", function(object){
   if(nrow(object@oesubsample)==0){object <- subsample(object)}
-  
-  if(!("LogWSA" %in% names(object@predictors)))
-    object@predictors$LogWSA <- log10(object@predictors$AREA_SQKM)
-  
-  names(object@predictors)[which(names(object@predictors) == "TEMP_00_09")] <- "AvgTemp00_09"
-  names(object@predictors)[which(names(object@predictors) == "PPT_00_09")] <- "AvgPPT00_09"
-  names(object@predictors)[which(names(object@predictors) == "LogWSA")] <- "Log_Area"
-  names(object@predictors)[which(names(object@predictors) == "SITE_ELEV")] <-  "AvgOfElevation"
-  
-  
-  
-  bugspa <- dbGetQuery(object@dbconn, "Select * FROM bugscal_pa2")
-  row.names(bugspa) <- bugspa[, 1]
-  bugspa <- bugspa[, 2:ncol(bugspa)]
+  load(system.file("data", "oe_stuff.rdata", package="CSCI"))
   
   object@predictors <- merge(unique(object@oesubsample[, c("StationCode", "SampleID")]), object@predictors,
-                             by="StationCode")
-  row.names(object@predictors) <- paste(object@predictors$StationCode, "%", object@predictors$SampleID,
-                                        sep="")
+                             by="StationCode", all.x=FALSE)
+  row.names(object@predictors) <- paste0(object@predictors$StationCode, "%", object@predictors$SampleID)
+  
   iterate <- function(rep){
     patable <- dcast(data=object@oesubsample[, c("StationCode", "SampleID", "STE", rep)],
                      StationCode + SampleID ~ STE,
@@ -103,15 +90,15 @@ setMethod("rForest", "oe", function(object){
     patable[is.na(patable)] <- 0
     row.names(patable) <- paste(patable$StationCode, "%", patable$SampleID, sep="")
     
-    iresult <- model.predict.RanFor.4.2(bugcal.pa=bugspa,
-                                        grps.final=dbGetQuery(object@dbconn, "Select * FROM grps_final")$grps_final,
-                                        preds.final=c("AvgTemp00_09", "Log_Area", "AvgPPT00_09", "AvgOfElevation"),
-                                        ranfor.mod=rf.mod,
+    iresult <- model.predict.RanFor.4.2(bugcal.pa=oe_stuff[[2]],
+                                        grps.final=oe_stuff[[3]],
+                                        preds.final=oe_stuff[[4]],
+                                        ranfor.mod=oe_stuff[[1]],
                                         prednew=object@predictors,
                                         bugnew=patable,
                                         Pc=0.5,
                                         Cal.OOB=FALSE)
-    iresult$SampleID <- unique(patable$SampleID)
+    iresult$SampleID <- unique(object@predictors$SampleID)
     return(iresult)
   }
   object@fulliterations <- lapply(paste("Replicate", 1:20), function(i)iterate(i))
@@ -127,6 +114,7 @@ setMethod("rForest", "oe", function(object){
   object
 })
 
+
 setMethod("score", "oe", function(object)rForest(object))
 
 setMethod("summary", "oe", function(object = "oe"){
@@ -137,7 +125,7 @@ setMethod("summary", "oe", function(object = "oe"){
 })
 
 setMethod("plot", "oe", function(x = "oe"){
-  load(system.file("data", "base_map.rdata", package="hybridindex"))
+  load(system.file("data", "base_map.rdata", package="CSCI"))
   x@result$MMIScore <- cut(x@oeresults[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
   x@result <- cbind(x@result, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
   ggmap(base_map) + 
