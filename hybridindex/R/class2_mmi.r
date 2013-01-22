@@ -82,7 +82,9 @@ setMethod("metrics", "mmi", function(object){
     result.reduce <- Reduce(function(x,y)merge(x,y, by="SampleID"), result.df)
     names <- c("Shannon_Diversity", "Intolerant_PercentTaxa", "ToleranceValue",
                "CFCG_Taxa", "Shredder_Taxa", "Clinger_Taxa", "Coleoptera_Taxa", "Noninsect_PercentTaxa")
-    result_final <- cbind(result.reduce, sapply(names, function(names)apply(result.reduce[, grep(names, names(result.reduce))], 1, mean)))
+    means <- sapply(names, function(names)apply(result.reduce[, grep(names, names(result.reduce))], 1, mean))
+    if(class(means) != "matrix")means <- t(means)
+    result_final <- cbind(result.reduce, means)
     result_final
   }
   object@metrics <- BMIall_hybrid(object@subsample)
@@ -99,7 +101,10 @@ setMethod("rForest", "mmi", function(object){
   object@predictors$Log_P_MEAN<-  log10(object@predictors$P_MEAN + 0.0001)
   object@predictors$Log_N_MEAN<-  log10(object@predictors$N_MEAN + 0.00001)
   
-  object@modelprediction <- data.frame(sapply(final.forests, function(rf)predict(rf, object@predictors)))
+  res <- sapply(final.forests, function(rf)predict(rf, object@predictors))
+  if(class(res)!="matrix")res <- data.frame(t(res[1:8]))
+  
+  object@modelprediction <- as.data.frame(res)
   names(object@modelprediction) <- c("Shannon_Diversity", "Intolerant_PercentTaxa", "ToleranceValue",
                                      "CFCG_Taxa", "Shredder_Taxa", "Clinger_Taxa", "Coleoptera_Taxa", "Noninsect_PercentTaxa")
   object@modelprediction$V1 <- unique(object@predictors$SampleID)
@@ -108,18 +113,20 @@ setMethod("rForest", "mmi", function(object){
 
 setMethod("score", "mmi", function(object){
   if(nrow(object@modelprediction) == 0){object <- rForest(object)}
+  load(system.file("data", "maxmin.rdata",  package="CSCI"))
   col_names <- c("Shannon_Diversity", "Intolerant_PercentTaxa", "ToleranceValue",
                  "CFCG_Taxa", "Shredder_Taxa", "Clinger_Taxa", "Coleoptera_Taxa", "Noninsect_PercentTaxa")
   object@metrics <- object@metrics[order(object@metrics$SampleID), ]
   object@modelprediction <- object@modelprediction[order(object@modelprediction$V1), ]
   
-  object@result <- as.data.frame(sapply(col_names, function(col){
+  object_result <- sapply(col_names, function(col){
     result <- (object@metrics[, col] - object@modelprediction[, col] - maxmin[1, col])/(maxmin[2, col] - maxmin[1, col])
     result <- ifelse(result > 1, 1, ifelse(
       result < 0, 0, result))
     result
-  }))
-  
+  })
+  if(class(object_result) != "matrix")object_result <- t(object_result)
+  object@result <- data.frame(object_result)
   names(object@result) <- paste0(col_names, "_score")
   object@finalscore <- data.frame(unique(object@modelprediction$V1), 
                                   apply(object@result, 1, mean)/0.808484)

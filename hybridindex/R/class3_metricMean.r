@@ -19,7 +19,7 @@ setMethod("initialize", "metricMean", function(.Object="metricMean", x="mmi", y=
 })
 
 setMethod("summary", "metricMean", function(object = "metricMean", report="core"){
-  
+  load(system.file("data", "oe_stuff.rdata", package="CSCI"))
   object@mean.metric$Count <- ddply(object@subsample, "SampleID", function(df)sum(df$Result))[, 2]
   object@mean.metric$Number_of_Iterations <- ifelse(object@mean.metric$Count >= 500, 20, 1)
   object@mean.metric$Pcnt_Ambiguous_Individuals <- object@ambiguous$individuals
@@ -50,7 +50,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="core"
   
   if(report == "Suppl1_OE.E"){
     return(cbind(object@mean.metric[, c("SampleID", "StationCode")], 
-                 predict %*% apply(bugcal.pa,2,function(x){tapply(x,grps.final,function(y){sum(y)/length(y)})})))
+                 predict %*% apply(oe_stuff[[2]],2,function(x){tapply(x,oe_stuff[[3]],function(y){sum(y)/length(y)})})))
   }
   
   if(report == "Suppl1_OE.O"){

@@ -102,8 +102,11 @@ model.predict.RanFor.4.2 <-function(bugcal.pa,grps.final,preds.final,ranfor.mod,
                                                                                                                   pnull<-apply(bugcal.pa,2,sum)/dim(bugcal.pa)[[1]];  #null model predicted occurrnece probabilities, all taxa;
                                                                                                                   nulltax<-names(pnull[pnull>=Pc]); #subset of taxa with Pnull >= Pc;
                                                                                                                   Enull<-sum(pnull[nulltax]);
-                                                                                                                  Obsnull<-apply(bugnew.pa[,nulltax],1,sum); #vector of Observed richness, new samples, under null model;
-                                                                                                                  BC.null<-apply(bugnew.pa[,nulltax],1,function(x)sum(abs(x-pnull[nulltax])))/(Obsnull+Enull); #vector of null-model BC;
+                                                                                                                   
+                                                                                                  
+                                                                                                                   
+                                                                                                                  Obsnull<-apply(subset(bugnew.pa, select=nulltax),1,sum); #vector of Observed richness, new samples, under null model;
+                                                                                                                  BC.null<-apply(subset(bugnew.pa, select=nulltax),1,function(x)sum(abs(x-pnull[nulltax])))/(Obsnull+Enull); #vector of null-model BC;
                                                                                                                   
                                                                                                                   #5.3 - Final data frame contains values of O, E, O/E, Onull, Enull, Onull/Enull, BC.prd and BC.null, for all samples;
                                                                                                                   #Also includes outlier flags;

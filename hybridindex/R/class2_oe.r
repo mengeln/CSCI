@@ -90,6 +90,7 @@ setMethod("rForest", "oe", function(object){
     patable[is.na(patable)] <- 0
     row.names(patable) <- paste(patable$StationCode, "%", patable$SampleID, sep="")
     
+    
     iresult <- model.predict.RanFor.4.2(bugcal.pa=oe_stuff[[2]],
                                         grps.final=oe_stuff[[3]],
                                         preds.final=oe_stuff[[4]],
