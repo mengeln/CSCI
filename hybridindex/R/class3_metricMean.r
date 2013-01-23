@@ -35,7 +35,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="core"
   
   names <- c("Shannon_Diversity", "Intolerant_PercentTaxa",
              "ToleranceValue", "Shredder_Taxa", "Clinger_Taxa", "Coleoptera_Taxa", 
-             "Noninsect_PercentTaxa")
+             "Noninsect_PercentTaxa", "CFCG_Taxa")
   if(report == "Supp1_mmi"){
     model <- object@modelprediction[, names]
     names(model) <- paste0(names(model), "_predicted")
@@ -48,14 +48,16 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="core"
     return(cbind(object@mean.metric[, c("SampleID", "StationCode")], predict))
   }
   
-  if(report == "Suppl1_OE.E"){
-    return(cbind(object@mean.metric[, c("SampleID", "StationCode")], 
-                 predict %*% apply(oe_stuff[[2]],2,function(x){tapply(x,oe_stuff[[3]],function(y){sum(y)/length(y)})})))
-  }
-  
-  if(report == "Suppl1_OE.O"){
+  if(report == "Suppl1_OE"){
+    E <- cbind(object@mean.metric[, c("SampleID", "StationCode")], 
+                 predict %*% apply(oe_stuff[[2]],2,function(x){tapply(x,oe_stuff[[3]],function(y){sum(y)/length(y)})}))
     object@oesubsample$Replicate_mean <- apply(object@oesubsample[, paste("Replicate", 1:20)], 1, mean)
-    dcast(object@oesubsample, SampleID + StationCode ~ STE, value.var="Replicate_mean", sum, na.rm=TRUE)
+    O <- dcast(object@oesubsample, SampleID + StationCode ~ STE, value.var="Replicate_mean", sum, na.rm=TRUE)
+    ids <- c("SampleID", "StationCode")
+    result <- merge(melt(E, id.vars=ids), melt(O, id.vars=ids), by=c("variable", ids), all.x=TRUE)
+    names(result) <- c("OTU", "SampleID", "StationCode", "CaptureProb", "Observed")
+    result$Observed[is.na(result$Observed)] <- 0
+    result[, c("SampleID", "StationCode", "OTU", "CaptureProb", "Observed")]
   }
 })
   
