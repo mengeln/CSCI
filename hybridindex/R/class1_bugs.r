@@ -1,6 +1,7 @@
 setClass("bugs", representation(bugdata="data.frame",
-                                predictors="data.frame",
-                                dbconn="SQLiteConnection"),
+                                predictors="data.frame"#,
+                                #dbconn="SQLiteConnection"
+                                ),
          #prototype=list(dbconn = dbConnect("SQLite", "hybridindex/data/bug_metadata.db"))
          )
 
@@ -11,7 +12,7 @@ setValidity("bugs", function(object){
 setMethod("initialize", "bugs", function(.Object="bugs", bugdata=data.frame(), predictors=data.frame()){
   .Object@bugdata <- bugdata
   .Object@predictors <- predictors
-  .Object@dbconn <- dbConnect("SQLite", system.file("data", "bug_metadata.db", package="CSCI"))
+  #.Object@dbconn <- dbConnect("SQLite", system.file("data", "bug_metadata.db", package="CSCI"))
   .Object
 })
 

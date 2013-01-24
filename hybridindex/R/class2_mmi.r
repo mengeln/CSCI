@@ -148,10 +148,12 @@ setMethod("summary", "mmi", function(object = "mmi"){
 
 setMethod("plot", "mmi", function(x = "mmi"){
   load(system.file("data", "base_map.rdata", package="CSCI"))
-  x@result$MMIScore <- cut(x@finalscore[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
+  if(nrow(x@finalscore) == 0)stop("No data to plot; compute MMI scores first")
+  x@result$MMIScore <- x@finalscore[, 2]
   x@result <- cbind(x@result, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
   ggmap(base_map) + 
-    geom_point(data=x@result, aes(x=New_Long, y=New_Lat, colour=MMIScore), size=4, alpha=.6)
+    geom_point(data=x@result, aes(x=New_Long, y=New_Lat, colour=MMIScore), size=4, alpha=.6) + 
+    scale_color_continuous(low="red", high="green", name="MMI Score") + labs(x="", y="")
 })
             
             

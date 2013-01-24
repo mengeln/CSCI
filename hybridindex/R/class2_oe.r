@@ -35,7 +35,8 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   })
   
   ###Match to STE###
-  otu_crosswalk <- dbGetQuery(object@dbconn, "SELECT * FROM ibitable2")
+  load(system.file("metadata.rdata", package="BMIMetrics"))
+  otu_crosswalk <- metadata
   object@bugdata$STE <- rep(NA, length(object@bugdata$Taxa))
   object@bugdata$STE <- otu_crosswalk[match(object@bugdata$Taxa, otu_crosswalk$FinalID), as.character(effort)]
   object@bugdata$STE <- as.character(object@bugdata$STE)
@@ -127,8 +128,9 @@ setMethod("summary", "oe", function(object = "oe"){
 
 setMethod("plot", "oe", function(x = "oe"){
   load(system.file("data", "base_map.rdata", package="CSCI"))
-  x@result$MMIScore <- cut(x@oeresults[, 2], breaks=c(0, .3, .8, 1.5), labels=c("low", "medium", "high"))
-  x@result <- cbind(x@result, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
+  if(nrow(x@oeresults) == 0)stop("No data to plot; compute O/E scores first")
+  x@oeresults <- cbind(x@oeresults, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
   ggmap(base_map) + 
-    geom_point(data=x@result, aes(x=New_Long, y=New_Lat, colour=MMIScore), size=4, alpha=.6)
+    geom_point(data=x@oeresults, aes(x=New_Long, y=New_Lat, colour=OoverE), size=4, alpha=.6) + 
+    scale_color_continuous(low="red", high="green", name="O/E Score") + labs(x="", y="")
 })
