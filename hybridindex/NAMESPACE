@@ -5,7 +5,6 @@ import(doParallel)
 import(vegan)
 import(ggmap)
 import(reshape2)
-import(RSQLite)
 exportMethods(
     "initialize",
     "metrics",
