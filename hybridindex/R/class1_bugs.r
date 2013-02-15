@@ -5,10 +5,6 @@ setClass("bugs", representation(bugdata="data.frame",
          #prototype=list(dbconn = dbConnect("SQLite", "hybridindex/data/bug_metadata.db"))
          )
 
-setValidity("bugs", function(object){
-  validity(object)
-})
-
 setMethod("initialize", "bugs", function(.Object="bugs", bugdata=data.frame(), predictors=data.frame()){
   .Object@bugdata <- bugdata
   .Object@predictors <- predictors

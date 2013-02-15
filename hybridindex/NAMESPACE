@@ -5,6 +5,7 @@ import(doParallel)
 import(vegan)
 import(ggmap)
 import(reshape2)
+export("CSCI")
 exportMethods(
     "initialize",
     "metrics",

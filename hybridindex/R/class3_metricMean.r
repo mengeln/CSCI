@@ -18,7 +18,7 @@ setMethod("initialize", "metricMean", function(.Object="metricMean", x="mmi", y=
   .Object
 })
 
-setMethod("summary", "metricMean", function(object = "metricMean", report="core"){
+setMethod("summary", "metricMean", function(object = "metricMean", report="all"){
   load(system.file("data", "oe_stuff.rdata", package="CSCI"))
   arglist <- c("core", "Suppl1_mmi", "Suppl1_grps", "Suppl1_OE", "Suppl2_OE", "Suppl2_mmi")
   report <- match.arg(report, c(arglist, "all"), several.ok=TRUE)
@@ -29,7 +29,8 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="core"
     reportlist
   }
   object@mean.metric$Count <- ddply(object@subsample, "SampleID", function(df)sum(df$Result))[, 2]
-  object@mean.metric$Number_of_Iterations <- ifelse(object@mean.metric$Count >= 500, 20, 1)
+  object@mean.metric$Number_of_MMI_Iterations <- ifelse(object@mean.metric$Count >= 500, 20, 1)
+  object@mean.metric$Number_of_OE_Iterations <- ifelse(object@mean.metric$Count >= 400, 20, 1)
   object@mean.metric$Pcnt_Ambiguous_Individuals <- object@ambiguous$individuals
   object@mean.metric$Pcnt_Ambiguous_Taxa <- object@ambiguous$taxa
   object@mean.metric$overall_flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
@@ -57,7 +58,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="core"
     names(model) <- paste0(names(model), "_predicted")
     reportlist <- add(cbind(object@mean.metric[, c("SampleID", "StationCode", "MMI_Score")],
                             object@metrics[, names], model, object@result))
-    names(reportlist)[length(reportlist)] <- "Supp1_mmi"
+    names(reportlist)[length(reportlist)] <- "Suppl1_mmi"
   }
 
   predict <- predict(oe_stuff[[1]],newdata=object@predictors[,oe_stuff[[4]]],type='prob')
@@ -98,7 +99,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="core"
     cmmi$replicate <- substr(cmmi$variable, nchar(match.arg(cmmi$variable, names, TRUE))+1, nchar(cmmi$variable))
     cmmi$metric <- match.arg(cmmi$variable, names, TRUE)
     cmmi$replicate[cmmi$replicate == ""] <- "Mean"
-    reportlist <- add(cmmi[, c("SampleID", "metric", "replicate", "value")])
+    reportlist <- add(cmmi[cmmi$replicate != "Mean", c("SampleID", "metric", "replicate", "value")])
     names(reportlist)[length(reportlist)] <- "Suppl2_mmi"
   }
   if(length(reportlist)==1)transform(reportlist) else reportlist

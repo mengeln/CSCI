@@ -1,26 +1,26 @@
 ###Validity helper###
 
 validity <-   function(object){
-  bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "DistinctCode")
+  bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "Distinct", "LifeStageCode")
   predictorcolumns <- c("StationCode", "New_Lat",     "New_Long",    "ELEV_RANGE",  "BDH_AVE",     "PPT_00_09",  
                         "LPREM_mean",  "KFCT_AVE",    "TEMP_00_09",  "P_MEAN",      "N_MEAN",      "PRMH_AVE",   
                         "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
                         "CaO_Mean")
-  for(i in 1:5){
-    if(!(bugcolumns[i] %in% names(object@bugdata)))
-      return(paste("'bugdata' missing column:", bugcolumns[i]))
-    if(sum(is.na(object@bugdata[, bugcolumns[i]])) != 0 & i != 5)
-      return(paste("Missing data in column", bugcolumns[i], "of 'bugdata'"))
-  }
-  for(i in 1:17){
-    if(!(predictorcolumns[i] %in% names(object@predictors)))
-      return(paste("'predictors' missing column:", predictorcolumns[i]))
-    if(sum(is.na(object@predictors[, predictorcolumns[i]])) != 0)
-      return(paste("Missing data in column", predictorcolumns[i], "of 'bugdata'"))
-  }
+  
+  if(!(all(bugcolumns %in% names(object@bugdata))))
+    return(paste("Bug data missing column:", bugcolumns[!(bugcolumns %in% names(object@bugdata))], collapse=" & "))
+  if(sum(all(is.na(object@bugdata[, bugcolumns[-5]]))) != 0)
+    return(paste("NAs found in bug data."))
+
+
+  if(!(all(predictorcolumns %in% names(object@predictors))))
+    return(paste("Predictors missing column:", predictorcolumns[!(predictorcolumns %in% names(object@predictors))], collapse=" & "))
+  if(sum(all(is.na(object@predictors[, predictorcolumns]))) != 0)
+    return(paste("NAs found in predictor data"))
+
   if(!("AREA_SQKM" %in% names(object@predictors)) & !("LogWSA" %in% names(object@predictors)))
     return("Predictors must include a column AREA_SQKM or LogWSA")
-  if(!setequal(object@bugdata$StationCode, object@predictors$StationCode))
+  if(!all(as.character(object@bugdata$StationCode) %in% as.character(object@predictors$StationCode)))
     return("All StationCode IDs must be represented in both bug and predictor data")
   if(length(unique(object@bugdata$SampleID)) != nrow(unique(object@bugdata[, c("StationCode", "SampleID")])))
     return("SampleIDs must be unique to one StationCode")

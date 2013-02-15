@@ -14,9 +14,6 @@ setClass("oe", representation(ambiguous="data.frame",
                         oeresults=data.frame()
          ))
 
-setValidity("oe", function(object){
-  validity(object)
-})
 
 setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   

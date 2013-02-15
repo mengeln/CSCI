@@ -16,11 +16,6 @@ setClass("mmi", representation(subsample = "data.frame",
          )
 )
 
-setValidity("mmi", function(object){
-  if(validity(object) & !("LifeStageCode" %in% names(object@bugdata))){return("Column LifeStageCode missing")} else
-    TRUE
-})
-
 setMethod("nameMatch", "mmi", function(object, effort = 1){
   agg <- aggregate(BMI(object@bugdata))[[effort]]
   class(agg) <- "data.frame"
