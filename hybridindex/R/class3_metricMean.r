@@ -43,9 +43,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   
   if("core" %in% report){
     object@mean.metric$E <- object@fulliterations[[1]]$E
-    object@mean.metric$Mean_O <- apply(
-      Reduce(function(x,y)cbind(x, y$O), object@fulliterations, init=rep(NA, nrow(object@fulliterations[[1]]))),
-      1, mean, na.rm=TRUE)
+    object@mean.metric$Mean_O <- object@mean.metric$E * object@mean.metric$OoverE
     reportlist <- add(object@mean.metric[, c(names(object@mean.metric)[1:8], "E", "Mean_O", "OoverE", "MMI_Score",
                                              "CSCI")])
     names(reportlist) <- "core"
