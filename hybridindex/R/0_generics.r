@@ -1,7 +1,7 @@
 setGeneric("nameMatch", function(object, effort = "SAFIT1")
   standardGeneric("nameMatch"))
 
-setGeneric("subsample", function(object)
+setGeneric("subsample", function(object, rand)
   standardGeneric("subsample"))
 
 setGeneric("metrics", function(object)

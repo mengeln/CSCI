@@ -1,16 +1,13 @@
 import(methods)
 import(randomForest)
 import(plyr)
-import(doParallel)
 import(vegan)
-import(ggmap)
 import(reshape2)
 export("CSCI")
 exportMethods(
     "initialize",
     "metrics",
     "nameMatch",
-    "plot",
     "rForest",
     "score",
     "show",

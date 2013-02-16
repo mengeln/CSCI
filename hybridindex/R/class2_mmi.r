@@ -27,23 +27,23 @@ setMethod("nameMatch", "mmi", function(object, effort = 1){
   return(object)
 })
 
-setMethod("subsample", "mmi", function(object){
+setMethod("subsample", "mmi", function(object, rand = sample.int(10000, 1)){
   if(is.null(object@bugdata$distinct)){object <- nameMatch(object)}
-  object@datalength <- length(object@bugdata)
-  object@bugdata$SampleID <- as.character(object@bugdata$SampleID)
-  rarifydown <- function(data){unlist(sapply(unique(data$SampleID), function(sample){
-    v <- data[data$SampleID==sample, "Result"]
-    if(sum(v)>=500){rrarefy(v, 500)} else
-    {v}
-  }))}
-  registerDoParallel()
-  rarificationresult <- foreach(i=1:20, .combine=cbind, .packages="vegan") %dopar% {
-    rarifydown(object@bugdata)
-  }
   
-  closeAllConnections()
-  object@subsample <- as.data.frame(cbind(object@bugdata, rarificationresult))
-  colnames(object@subsample)[(object@datalength + 1):(object@datalength + 20)]<- paste("Replicate", 1:20)
+  subsample <- as.data.frame(sapply(seq(1 + rand, 20 + rand), function(i){
+    commMatrix <- acast(object@bugdata, SampleID ~ Taxa + LifeStageCode, value.var="BAResult", fill=0)
+    samp <- rep.int(500, nrow(commMatrix))
+    samp[rowSums(commMatrix, na.rm=TRUE) < 500] <- 
+      rowSums(commMatrix, na.rm=TRUE)[rowSums(commMatrix, na.rm=TRUE) < 500]
+    set.seed(i)
+    
+    commMatrix <- rrarefy(commMatrix, samp)
+    
+    melt(commMatrix)$value}
+  ))
+  subsample <- subsample[rowSums(subsample) != 0, ]
+  colnames(subsample) <- paste("Replicate", 1:20)
+  object@subsample <- cbind(arrange(object@bugdata, Taxa, LifeStageCode), subsample)
   return(object)
 })
 
@@ -141,14 +141,5 @@ setMethod("summary", "mmi", function(object = "mmi"){
     show(object)
 })
 
-setMethod("plot", "mmi", function(x = "mmi"){
-  load(system.file("data", "base_map.rdata", package="CSCI"))
-  if(nrow(x@finalscore) == 0)stop("No data to plot; compute MMI scores first")
-  x@result$MMIScore <- x@finalscore[, 2]
-  x@result <- cbind(x@result, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
-  ggmap(base_map) + 
-    geom_point(data=x@result, aes(x=New_Long, y=New_Lat, colour=MMIScore), size=4, alpha=.6) + 
-    scale_color_continuous(low="red", high="green", name="MMI Score") + labs(x="", y="")
-})
             
             

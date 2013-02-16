@@ -30,7 +30,8 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   }
   object@mean.metric$Count <- ddply(object@subsample, "SampleID", function(df)sum(df$Result))[, 2]
   object@mean.metric$Number_of_MMI_Iterations <- ifelse(object@mean.metric$Count >= 500, 20, 1)
-  object@mean.metric$Number_of_OE_Iterations <- ifelse(object@mean.metric$Count >= 400, 20, 1)
+  object@mean.metric$Number_of_OE_Iterations <- 
+    ifelse(object@mean.metric$Count - object@mean.metric$Count*(object@ambiguous$individuals/100) >= 400, 20, 1)
   object@mean.metric$Pcnt_Ambiguous_Individuals <- object@ambiguous$individuals
   object@mean.metric$Pcnt_Ambiguous_Taxa <- object@ambiguous$taxa
   object@mean.metric$overall_flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
@@ -76,7 +77,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     ids <- c("SampleID", "StationCode")
     result <- merge(melt(E, id.vars=ids), melt(O, id.vars=ids), by=c("variable", ids), all.x=TRUE)
     names(result) <- c("OTU", "SampleID", "StationCode", "CaptureProb", "Mean Observed")
-    result$Observed[is.na(result$"Mean Observed")] <- 0
+    result$"Mean Observed"[is.na(result$"Mean Observed")] <- 0
     reportlist <- add(result[, c("SampleID", "StationCode", "OTU", "CaptureProb", "Mean Observed")])
     names(reportlist)[length(reportlist)] <- "Suppl1_OE"
   }
@@ -105,15 +106,4 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   if(length(reportlist)==1)transform(reportlist) else reportlist
 })
   
-
-setMethod("plot", "metricMean", function(x="metricMean"){
-  load(system.file("data", "base_map.rdata", package="CSCI"))
-  x@mean.metric$CSCIScore <- cut(x@mean.metric$CSCI, breaks=c(0, .4, .8, 1.5), labels=c("low", "medium", "high"))
-  hscore <- cbind(x@mean.metric$CSCIScore, x@mean.metric$CSCI, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
-  names(hscore)[1] <- "CSCIScore"
-  names(hscore)[2] <- "CSCI"
-  ggmap(base_map) + 
-    geom_point(data=hscore, aes(x=New_Long, y=New_Lat, colour=CSCI), size=4, alpha=.8) + 
-    scale_color_continuous(low="red", high="green", name="CSCI Score") + labs(x="", y="")
-})
 

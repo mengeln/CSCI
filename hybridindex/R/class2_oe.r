@@ -53,22 +53,23 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   return(object)
 })    
             
-setMethod("subsample", "oe", function(object){
+setMethod("subsample", "oe", function(object, rand = sample.int(10000, 1)){
   if(nrow(object@ambiguous)==0){object <- nameMatch(object)}
-  object@datalength <- length(object@bugdata)
-  object@bugdata$SampleID <- as.character(object@bugdata$SampleID)
-  rarifydown <- function(data){unlist(sapply(unique(data$SampleID), function(sample){
-    v <- data[data$SampleID==sample, "Result"]
-    if(sum(v)>=400){rrarefy(v, 400)} else
-    {v}
-  }))}
-  registerDoParallel()
-  rarificationresult <- foreach(i=1:20, .combine=cbind, .packages="vegan") %dopar% {
-    rarifydown(object@bugdata)
-  }
-  closeAllConnections()
-  object@oesubsample <- as.data.frame(cbind(object@bugdata, rarificationresult))
-  colnames(object@oesubsample)[(object@datalength + 1):(object@datalength + 20)]<- paste("Replicate", 1:20)
+  
+  subsample <- sapply(seq(1 + rand, 20 + rand), function(i){
+    commMatrix <- acast(object@bugdata, SampleID ~ Taxa + LifeStageCode, value.var="Result", fill=0)
+    set.seed(i)
+    samp <- rep.int(400, times = nrow(commMatrix))
+    samp[rowSums(commMatrix, na.rm=TRUE) < 400] <-
+      rowSums(commMatrix, na.rm=TRUE)[rowSums(commMatrix, na.rm=TRUE) < 400]
+    commMatrix <- rrarefy(commMatrix, samp)
+    melt(commMatrix)$value}
+  )
+ 
+  subsample <- subsample[rowSums(subsample) != 0, ]
+  colnames(subsample) <- paste("Replicate", 1:20)
+  object@oesubsample <- cbind(arrange(object@bugdata, Taxa, LifeStageCode), subsample)
+  
   return(object)
 })
 
@@ -121,13 +122,4 @@ setMethod("summary", "oe", function(object = "oe"){
     object@oeresults
   } else
     show(object)
-})
-
-setMethod("plot", "oe", function(x = "oe"){
-  load(system.file("data", "base_map.rdata", package="CSCI"))
-  if(nrow(x@oeresults) == 0)stop("No data to plot; compute O/E scores first")
-  x@oeresults <- cbind(x@oeresults, x@predictors[, c("StationCode", "SampleID", "New_Lat", "New_Long")])
-  ggmap(base_map) + 
-    geom_point(data=x@oeresults, aes(x=New_Long, y=New_Lat, colour=OoverE), size=4, alpha=.6) + 
-    scale_color_continuous(low="red", high="green", name="O/E Score") + labs(x="", y="")
 })
