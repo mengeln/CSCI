@@ -20,6 +20,7 @@ setMethod("initialize", "metricMean", function(.Object="metricMean", x="mmi", y=
 
 setMethod("summary", "metricMean", function(object = "metricMean", report="all"){
   load(system.file("data", "oe_stuff.rdata", package="CSCI"))
+  load(system.file("data", "extent.rdata", package="CSCI"))
   arglist <- c("core", "Suppl1_mmi", "Suppl1_grps", "Suppl1_OE", "Suppl2_OE", "Suppl2_mmi")
   report <- match.arg(report, c(arglist, "all"), several.ok=TRUE)
   if(report == "all")report <- arglist
@@ -39,13 +40,25 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   object@mean.metric <- object@mean.metric[, c(1:2, 6:9, 3:5)]
   object@mean.metric$mmi_count_flag <- ifelse(object@mean.metric$Count >=450, "Adequate", "Inadequate")
   object@mean.metric$ambig_count_flag <- ifelse(object@mean.metric$Pcnt_Ambiguous_Individuals < 20, "Adequate", "Inadequate")
-  object@mean.metric <- object@mean.metric[, c(1:6, 10:11, 7:9)]
   
+  predcheck <- function(data){
+    res <- apply(
+      sapply(names(extent), function(col){
+        sapply(data[, col], function(x){extent[1, col] > x | extent[2, col] < x})
+      }), 1, function(x)paste(names(which(x)), collapse=", "))
+    res[res == ""] <- "All within range"
+    res
+  }
+  object@mean.metric$Model_Experience_Flag <- predcheck(object@predictors)
+    
   if("core" %in% report){
     object@mean.metric$E <- object@fulliterations[[1]]$E
     object@mean.metric$Mean_O <- object@mean.metric$E * object@mean.metric$OoverE
-    reportlist <- add(object@mean.metric[, c(names(object@mean.metric)[1:8], "E", "Mean_O", "OoverE", "MMI_Score",
-                                             "CSCI")])
+    reportlist <- add(object@mean.metric[, c("StationCode", "SampleID", "Count", "Number_of_MMI_Iterations", 
+                                             "Number_of_OE_Iterations", "Pcnt_Ambiguous_Individuals", "mmi_count_flag",
+                                             "ambig_count_flag", "Model_Experience_Flag", 
+                                             "E", "Mean_O", "OoverE", 
+                                             "MMI_Score", "CSCI")])
     names(reportlist) <- "core"
   }
   
@@ -96,7 +109,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     
     test <- sapply(paste("Replicate", 1:20), function(rep){
       daply(x, "SampleID", function(df){
-        captable <- results$Suppl1_OE[reportlist$Suppl1_OE$SampleID == unique(df$SampleID), ]
+        captable <- result$Suppl1_OE[reportlist$Suppl1_OE$SampleID == unique(df$SampleID), ]
         ingroup <- as.character(captable$OTU[captable$CaptureProb > 0.5])
         sum(df[df$OTU %in% ingroup, rep] > 0)/
           sum(captable$CaptureProb[captable$OTU %in% ingroup])
