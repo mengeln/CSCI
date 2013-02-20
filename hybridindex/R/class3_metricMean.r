@@ -89,7 +89,24 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
                     value.var="value", fun.aggregate=sum)
     names(O)[3] <- c("OTU")
     result <- merge(E, O, by=c("SampleID", "StationCode", "OTU"))
-    reportlist <- add(result)
+    
+    x <- result
+    x[, 5:24] <- colwise(function(x)ifelse(x > 0, 1, 0))(x[, 5:24])
+    
+    
+    test <- sapply(paste("Replicate", 1:20), function(rep){
+      daply(x, "SampleID", function(df){
+        captable <- results$Suppl1_OE[reportlist$Suppl1_OE$SampleID == unique(df$SampleID), ]
+        ingroup <- as.character(captable$OTU[captable$CaptureProb > 0.5])
+        sum(df[df$OTU %in% ingroup, rep] > 0)/
+          sum(captable$CaptureProb[captable$OTU %in% ingroup])
+      })
+    })
+    test <- data.frame("SampleID" = row.names(test), "StationCode" = 
+                         reportlist$Suppl1_OE$StationCode[match(row.names(test), reportlist$Suppl1_OE$SampleID)],
+                       "OTU" = "OoverE", CaptureProb = NA, test, row.names=NULL)
+    names(test)[5:24] <- paste("Replicate", 1:20)
+    reportlist <- add(rbind(result, test))
     names(reportlist)[length(reportlist)] <- "Suppl2_OE"
   }
   if(all(c("Suppl2_mmi", "Suppl1_mmi") %in% report)){
