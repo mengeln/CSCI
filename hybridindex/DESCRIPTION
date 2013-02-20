@@ -5,14 +5,26 @@ Version: 1.3
 Date: 2012-09-26
 Author: MW Engeln
 Maintainer: <raphaelm@sccwrp.org>
-Description: Contains tools for calculating biotic integrity from taxonomic count data. Includes methods for a mutlitmetric index and observed over expected index. A mapping function is also included that will plot station results over a California base map.
+Description: Contains tools for calculating biotic integrity from taxonomic
+    count data. Includes methods for a mutlitmetric index and observed over
+    expected index. A mapping function is also included that will plot station
+    results over a California base map.
 License: GPL-3
-Depends: methods, randomForest, vegan, stringr, reshape2, plyr, BMIMetrics, data.table
-Collate: 
-  "0_generics.r"
-  "0_helpers.r"
-  "class1_bugs.r"
-  "class2_mmi.r"
-  "class2_oe.r"
-  "class3_metricMean.r"
-  "CSCI.r"
+Depends:
+    methods,
+    randomForest,
+    vegan,
+    stringr,
+    reshape2,
+    plyr,
+    BMIMetrics,
+    data.table
+Collate:
+    '0_generics.r'
+    '0_helpers.r'
+    'class1_bugs.r'
+    'class2_mmi.r'
+    'class2_oe.r'
+    'class3_metricMean.r'
+    'CSCI.r'
+    'data.r'

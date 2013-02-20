@@ -92,13 +92,34 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     reportlist <- add(result)
     names(reportlist)[length(reportlist)] <- "Suppl2_OE"
   }
-  if("Suppl2_mmi" %in% report){
+  if(all(c("Suppl2_mmi", "Suppl1_mmi") %in% report)){
+    load(system.file("data", "maxmin.rdata",  package="CSCI"))
+    
     cmmi <- melt(object@metrics, id.vars="SampleID")
     cmmi$variable <- as.character(cmmi$variable)
     cmmi$replicate <- substr(cmmi$variable, nchar(match.arg(cmmi$variable, names, TRUE))+1, nchar(cmmi$variable))
     cmmi$metric <- match.arg(cmmi$variable, names, TRUE)
     cmmi$replicate[cmmi$replicate == ""] <- "Mean"
-    reportlist <- add(cmmi[cmmi$replicate != "Mean", c("SampleID", "metric", "replicate", "value")])
+    cmmi <- cmmi[cmmi$replicate != "Mean", c("SampleID", "metric", "replicate", "value")]
+    
+    
+    prediction <- melt(reportlist$Suppl1_mmi, id.vars=c("StationCode", "SampleID"))
+    prediction <- subset(prediction, grepl("predicted", variable))
+    prediction$variable <- as.character(prediction$variable)
+    prediction$variable <- substr(prediction$variable, 1, nchar(prediction$variable) - 10)
+    names(prediction)[3:4] <- c("metric", "predicted_value")
+    x <- merge(cmmi, prediction)
+    x$score <- mapply(function(value, predict, metric){
+      result <- (value - predict - maxmin[1, metric])/(maxmin[2, metric] - maxmin[1, metric])
+      result <- ifelse(result > 1, 1, ifelse(
+        result < 0, 0, result))
+      result
+    }, x$value, x$predicted_value, x$metric)
+    x$replicate <- as.numeric(x$replicate)
+    x <- arrange(x[, c("StationCode", "SampleID", "metric", "replicate", "value", "predicted_value", "score")],
+                 SampleID, metric, replicate)
+    
+    reportlist <- add(x)
     names(reportlist)[length(reportlist)] <- "Suppl2_mmi"
   }
   if(length(reportlist)==1)transform(reportlist) else reportlist

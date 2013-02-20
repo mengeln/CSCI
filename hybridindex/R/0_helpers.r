@@ -24,6 +24,9 @@ validity <-   function(object){
     return("All StationCode IDs must be represented in both bug and predictor data")
   if(length(unique(object@bugdata$SampleID)) != nrow(unique(object@bugdata[, c("StationCode", "SampleID")])))
     return("SampleIDs must be unique to one StationCode")
+  if(sum(duplicated(paste(object@bugdata$SampleID, object@bugdata$FinalID, object@bugdata$LifeStageCode, 
+                       object@bugdata$Distinct)) > 0))
+    return("Duplicated data detected in 'bugs' data frame")
   TRUE
 }
 
