@@ -109,7 +109,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     
     test <- sapply(paste("Replicate", 1:20), function(rep){
       daply(x, "SampleID", function(df){
-        captable <- result$Suppl1_OE[reportlist$Suppl1_OE$SampleID == unique(df$SampleID), ]
+        captable <- reportlist$Suppl1_OE[reportlist$Suppl1_OE$SampleID == unique(df$SampleID), ]
         ingroup <- as.character(captable$OTU[captable$CaptureProb > 0.5])
         sum(df[df$OTU %in% ingroup, rep] > 0)/
           sum(captable$CaptureProb[captable$OTU %in% ingroup])
