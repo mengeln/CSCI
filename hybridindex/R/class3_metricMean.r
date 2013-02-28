@@ -42,10 +42,11 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   object@mean.metric$ambig_count_flag <- ifelse(object@mean.metric$Pcnt_Ambiguous_Individuals < 20, "Adequate", "Inadequate")
   
   predcheck <- function(data){
-    res <- apply(
-      sapply(names(extent), function(col){
-        sapply(data[, col], function(x){extent[1, col] > x | extent[2, col] < x})
-      }), 1, function(x)paste(names(which(x)), collapse=", "))
+    dat <- sapply(names(extent), function(col){
+      sapply(data[, col], function(x){extent[1, col] > x | extent[2, col] < x})
+    })
+    if(nrow(data) ==1)dat <- t(dat)
+    res <- apply(dat, 1, function(x)paste(names(which(x)), collapse=", "))
     res[res == ""] <- "All within range"
     res
   }
@@ -115,12 +116,17 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
           sum(captable$CaptureProb[captable$OTU %in% ingroup])
       })
     })
+    if(length(unique(reportlist$Suppl1_OE$SampleID)) == 1){
+      test <- t(test)
+      row.names(test) <- unique(reportlist$Suppl1_OE$SampleID)
+    }
     test <- data.frame("SampleID" = row.names(test), "StationCode" = 
                          reportlist$Suppl1_OE$StationCode[match(row.names(test), reportlist$Suppl1_OE$SampleID)],
                        "OTU" = "OoverE", CaptureProb = NA, test, row.names=NULL)
     names(test)[5:24] <- paste("Replicate", 1:20)
     reportlist <- add(rbind(result, test))
     names(reportlist)[length(reportlist)] <- "Suppl2_OE"
+    names(reportlist$Suppl2_OE)[5:24] <- paste0("Iteration", 1:20)
   }
   if(all(c("Suppl2_mmi", "Suppl1_mmi") %in% report)){
     load(system.file("data", "maxmin.rdata",  package="CSCI"))
@@ -148,7 +154,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     x$replicate <- as.numeric(x$replicate)
     x <- arrange(x[, c("StationCode", "SampleID", "metric", "replicate", "value", "predicted_value", "score")],
                  SampleID, metric, replicate)
-    
+    names(x)[names(x) == "replicate"] <- "Iteration"
     reportlist <- add(x)
     names(reportlist)[length(reportlist)] <- "Suppl2_mmi"
   }

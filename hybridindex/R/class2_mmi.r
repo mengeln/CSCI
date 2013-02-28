@@ -31,7 +31,8 @@ setMethod("subsample", "mmi", function(object, rand = sample.int(10000, 1)){
   if(is.null(object@bugdata$distinct)){object <- nameMatch(object)}
   
   subsample <- as.data.frame(sapply(seq(1 + rand, 20 + rand), function(i){
-    commMatrix <- acast(object@bugdata, SampleID ~ Taxa + LifeStageCode, value.var="BAResult", fill=0)
+    commMatrix <- acast(object@bugdata, SampleID ~ Taxa + LifeStageCode + distinct, value.var="BAResult", fill=0,
+                        fun.aggregate = sum, na.rm=TRUE)
     samp <- rep.int(500, nrow(commMatrix))
     samp[rowSums(commMatrix, na.rm=TRUE) < 500] <- 
       rowSums(commMatrix, na.rm=TRUE)[rowSums(commMatrix, na.rm=TRUE) < 500]
@@ -39,11 +40,23 @@ setMethod("subsample", "mmi", function(object, rand = sample.int(10000, 1)){
     
     commMatrix <- rrarefy(commMatrix, samp)
     
-    melt(commMatrix)$value}
+    if(i == 1+ rand)
+      melt(commMatrix)
+    else
+      melt(commMatrix)$value
+  }
   ))
-  subsample <- subsample[rowSums(subsample) != 0, ]
-  colnames(subsample) <- paste("Replicate", 1:20)
-  object@subsample <- cbind(arrange(object@bugdata, Taxa, LifeStageCode), subsample)
+  colnames(subsample)[3:22] <- paste("Replicate", 1:20)
+  subsample <- subsample[rowSums(subsample[, 3:22]) != 0, ]
+  break_ids <- strsplit(as.character(subsample$Var2), "_")
+  subsample$Taxa <- sapply(break_ids, `[`, 1)
+  subsample$LifeStageCode <- sapply(break_ids, `[`, 2)
+  subsample$distinct <- sapply(break_ids, `[`, 3)
+  subsample$SampleID <- subsample$Var1
+  subsample <- subsample[, c(-1, -2)]
+  object@subsample <- merge(arrange(object@bugdata, Taxa, LifeStageCode), subsample, all.x=TRUE, 
+                            by.x=c("SampleID", "SAFIT2", "LifeStageCode", "distinct"),
+                            by.y=c("SampleID", "Taxa", "LifeStageCode", "distinct"))
   return(object)
 })
 
