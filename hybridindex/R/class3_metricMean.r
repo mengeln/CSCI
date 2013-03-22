@@ -21,6 +21,7 @@ setMethod("initialize", "metricMean", function(.Object="metricMean", x="mmi", y=
 setMethod("summary", "metricMean", function(object = "metricMean", report="all"){
   load(system.file("data", "oe_stuff.rdata", package="CSCI"))
   load(system.file("data", "extent.rdata", package="CSCI"))
+  load(system.file("data", "mahalData.rdata", package="CSCI"))
   arglist <- c("core", "Suppl1_mmi", "Suppl1_grps", "Suppl1_OE", "Suppl2_OE", "Suppl2_mmi")
   report <- match.arg(report, c(arglist, "all"), several.ok=TRUE)
   if(report == "all")report <- arglist
@@ -29,12 +30,15 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     reportlist[[length(reportlist)+1]] <- obj
     reportlist
   }
-  object@mean.metric$Count <- ddply(object@subsample, "SampleID", function(df)sum(df$Result))[, 2]
+#   Count <- ddply(object@bugdata, "SampleID", function(df)sum(df$BAResult))
+#   object@mean.metric$Count <- Count[match(Count$SampleID, object@mean.metric$SampleID), 2]
   object@mean.metric$Number_of_MMI_Iterations <- ifelse(object@mean.metric$Count >= 500, 20, 1)
   object@mean.metric$Number_of_OE_Iterations <- 
     ifelse(object@mean.metric$Count - object@mean.metric$Count*(object@ambiguous$individuals/100) >= 400, 20, 1)
-  object@mean.metric$Pcnt_Ambiguous_Individuals <- object@ambiguous$individuals
-  object@mean.metric$Pcnt_Ambiguous_Taxa <- object@ambiguous$taxa
+  object@mean.metric$Pcnt_Ambiguous_Individuals <- object@ambiguous$individuals[match(object@ambiguous$SampleID,
+                                                                                      object@mean.metric$SampleID)]
+  object@mean.metric$Pcnt_Ambiguous_Taxa <- object@ambiguous$taxa[match(object@ambiguous$SampleID,
+                                                                        object@mean.metric$SampleID)]
   object@mean.metric$overall_flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
                                             "Adequate", "Inadequate")
   object@mean.metric <- object@mean.metric[, c(1:2, 6:9, 3:5)]
@@ -50,14 +54,21 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     res[res == ""] <- "All within range"
     res
   }
-  object@mean.metric$Model_Experience_Flag <- predcheck(object@predictors)
+#   object@mean.metric$Model_Experience_Flag_range <- predcheck(object@predictors)
+#   object@mean.metric$Model_Experience_Flag_multivariate_experimental <- isInside(object@predictors,
+#                                                                     refcaldata = refcal,
+#                                                                     averageImp = averageMSE)$outlier
     
   if("core" %in% report){
     object@mean.metric$E <- object@fulliterations[[1]]$E
     object@mean.metric$Mean_O <- object@mean.metric$E * object@mean.metric$OoverE
     reportlist <- add(object@mean.metric[, c("StationCode", "SampleID", "Count", "Number_of_MMI_Iterations", 
-                                             "Number_of_OE_Iterations", "Pcnt_Ambiguous_Individuals", "mmi_count_flag",
-                                             "ambig_count_flag", "Model_Experience_Flag", 
+                                             "Number_of_OE_Iterations", "Pcnt_Ambiguous_Individuals",
+                                             "Pcnt_Ambiguous_Taxa",
+                                             "mmi_count_flag",
+                                             "ambig_count_flag",
+                                             #"Model_Experience_Flag_range", 
+                                             #"Model_Experience_Flag_multivariate_experimental",
                                              "E", "Mean_O", "OoverE", 
                                              "MMI_Score", "CSCI")])
     names(reportlist) <- "core"

@@ -19,7 +19,9 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   
   colnames(object@bugdata)[which(colnames(object@bugdata) == "FinalID")] <- "Taxa"
   colnames(object@bugdata)[which(colnames(object@bugdata) == "BAResult")] <- "Result"
-  
+  object@oeresults <- ddply(object@bugdata, .(SampleID),
+                            summarize, Result = sum(Result))[, c("SampleID", "Result")]
+  names(object@oeresults)[2] <- "Count"
   ###Clean data###
   object@bugdata$Taxa <- str_trim(object@bugdata$Taxa)
   ###Aggregate taxa###
@@ -121,8 +123,9 @@ setMethod("rForest", "oe", function(object){
     l
   })
   object@iterations <- do.call(cbind, lapply(object@fulliterations, function(l)l$OoverE))
-  object@oeresults <- data.frame(labels, apply(object@iterations, 1, mean))
-  names(object@oeresults) <- c("StationCode", "SampleID", "OoverE")
+  oeresults <- data.frame(labels, apply(object@iterations, 1, mean))
+  names(oeresults) <- c("StationCode", "SampleID", "OoverE")
+  object@oeresults <- merge(oeresults, object@oeresults)
   object
 })
 
