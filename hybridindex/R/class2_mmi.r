@@ -61,7 +61,7 @@ setMethod("subsample", "mmi", function(object, rand = sample.int(10000, 1)){
 })
 
 setMethod("metrics", "mmi", function(object){
-  if(nrow(object@subsample) == 0){object <- subsample(object)}
+  if(nrow(object@subsample) == 0){object <- subsample(object, rand = sample.int(10000, 1))}
   BMIall_hybrid <- function(x){
     x$Habit <- as.character(x$Habit)
     replicate_list <- lapply(1:20, function(i){

@@ -41,7 +41,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
                                                                         object@mean.metric$SampleID)]
   object@mean.metric$overall_flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
                                             "Adequate", "Inadequate")
-  object@mean.metric <- object@mean.metric[, c(1:2, 6:9, 3:5)]
+  #object@mean.metric <- object@mean.metric[, c(1:2, 6:9, 3:5)]
   object@mean.metric$mmi_count_flag <- ifelse(object@mean.metric$Count >=450, "Adequate", "Inadequate")
   object@mean.metric$ambig_count_flag <- ifelse(object@mean.metric$Pcnt_Ambiguous_Individuals < 20, "Adequate", "Inadequate")
   
@@ -62,6 +62,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   if("core" %in% report){
     object@mean.metric$E <- object@fulliterations[[1]]$E
     object@mean.metric$Mean_O <- object@mean.metric$E * object@mean.metric$OoverE
+        
     reportlist <- add(object@mean.metric[, c("StationCode", "SampleID", "Count", "Number_of_MMI_Iterations", 
                                              "Number_of_OE_Iterations", "Pcnt_Ambiguous_Individuals",
                                              "Pcnt_Ambiguous_Taxa",

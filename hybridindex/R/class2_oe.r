@@ -88,7 +88,7 @@ setMethod("subsample", "oe", function(object, rand = sample.int(10000, 1)){
 })
 
 setMethod("rForest", "oe", function(object){
-  if(nrow(object@oesubsample)==0){object <- subsample(object)}
+  if(nrow(object@oesubsample)==0){object <- subsample(object, rand = sample.int(10000, 1))}
   load(system.file("data", "oe_stuff.rdata", package="CSCI"))
   
   object@predictors <- merge(unique(object@oesubsample[, c("StationCode", "SampleID")]), object@predictors,
