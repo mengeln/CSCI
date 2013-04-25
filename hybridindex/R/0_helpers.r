@@ -6,16 +6,16 @@ validity <-   function(object){
                         "LPREM_mean",  "KFCT_AVE",    "TEMP_00_09",  "P_MEAN",      "N_MEAN",      "PRMH_AVE",   
                         "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
                         "CaO_Mean")
-  BMI(object@bugdata)
   if(!(all(bugcolumns %in% names(object@bugdata))))
     return(paste("Bug data missing column:", bugcolumns[!(bugcolumns %in% names(object@bugdata))], collapse=" & "))
-  if(sum(all(is.na(object@bugdata[, bugcolumns[-5]]))) != 0)
+  BMI(object@bugdata)
+  if(any(is.na(as.matrix(object@bugdata[, bugcolumns[-5]]))))
     return(paste("NAs found in bug data."))
 
 
   if(!(all(predictorcolumns %in% names(object@predictors))))
     return(paste("Predictors missing column:", predictorcolumns[!(predictorcolumns %in% names(object@predictors))], collapse=" & "))
-  if(sum(all(is.na(object@predictors[, predictorcolumns]))) != 0)
+  if(any(is.na(as.matrix(object@predictors[, predictorcolumns]))))
     return(paste("NAs found in predictor data"))
 
   if(!("AREA_SQKM" %in% names(object@predictors)) & !("LogWSA" %in% names(object@predictors)))

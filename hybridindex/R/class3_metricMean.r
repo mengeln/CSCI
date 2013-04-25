@@ -60,7 +60,8 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
 #                                                                     averageImp = averageMSE)$outlier
     
   if("core" %in% report){
-    object@mean.metric$E <- object@fulliterations[[1]]$E
+    object@mean.metric$E <- object@fulliterations[[1]]$E[match(object@mean.metric$SampleID,
+                                                               object@fulliterations[[1]]$SampleID)]
     object@mean.metric$Mean_O <- object@mean.metric$E * object@mean.metric$OoverE
         
     reportlist <- add(object@mean.metric[, c("StationCode", "SampleID", "Count", "Number_of_MMI_Iterations", 
@@ -88,8 +89,12 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
 
   predict <- predict(oe_stuff[[1]],newdata=object@predictors[,oe_stuff[[4]]],type='prob')
   colnames(predict) <- paste0("pGroup", 1:11)
+  
+  predict2 <- data.frame(StationCode = sapply(strsplit(row.names(predict), "%"), `[`, 1),
+                        SampleID = sapply(strsplit(row.names(predict), "%"), `[`, 2),
+                        predict)
   if("Suppl1_grps" %in% report){
-    reportlist <- add(cbind(object@mean.metric[, c("SampleID", "StationCode")], predict))
+    reportlist <- add(merge(object@mean.metric[, c("SampleID", "StationCode")], predict2))
     names(reportlist)[length(reportlist)] <- "Suppl1_grps"
   }
   

@@ -25,14 +25,14 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   ###Clean data###
   object@bugdata$Taxa <- str_trim(object@bugdata$Taxa)
   ###Aggregate taxa###
-  object@bugdata <- ddply(object@bugdata, "SampleID", function(df){
-    ddply(df, "Taxa", function(sdf){
-      id <- unique(sdf[, !(colnames(sdf) %in% "Result")])
-      Result <- sum(sdf$Result)
-      cbind(id, Result)
-    })
-  })
-  
+#   object@bugdata <- ddply(object@bugdata, "SampleID", function(df){
+#     ddply(df, "Taxa", function(sdf){
+#       id <- unique(sdf[, !(colnames(sdf) %in% "Result")])
+#       Result <- sum(sdf$Result)
+#       cbind(id, Result)
+#     })
+#   })
+
   ###Match to STE###
   load(system.file("metadata.rdata", package="BMIMetrics"))
   otu_crosswalk <- metadata
@@ -90,7 +90,12 @@ setMethod("subsample", "oe", function(object, rand = sample.int(10000, 1)){
 setMethod("rForest", "oe", function(object){
   if(nrow(object@oesubsample)==0){object <- subsample(object, rand = sample.int(10000, 1))}
   load(system.file("data", "oe_stuff.rdata", package="CSCI"))
-  
+  if(is.null(object@predictors$LogWSA))
+    object@predictors$LogWSA <-log10(object@predictors$AREA_SQKM)
+  if(is.null(object@predictors$AREA_SQKM))
+    object@predictors$AREA_SQKM <- 10^(object@predictors$LogWSA)
+  object@predictors$Log_P_MEAN <-  log10(object@predictors$P_MEAN + 0.0001)
+  object@predictors$Log_N_MEAN <-  log10(object@predictors$N_MEAN + 0.00001)
   object@predictors <- merge(unique(object@oesubsample[, c("StationCode", "SampleID")]), object@predictors,
                              by="StationCode", all.x=FALSE)
   row.names(object@predictors) <- paste0(object@predictors$StationCode, "%", object@predictors$SampleID)

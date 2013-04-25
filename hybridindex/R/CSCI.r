@@ -70,12 +70,13 @@
 
 CSCI <- function (bugs, stations, rand = sample.int(10000, 1)) {
   mmi <- new("mmi", bugs, stations)
-  valid <- CSCI:::validity(mmi)
-  if(class(valid) == "character")stop(valid)
+  stopifnot(CSCI:::validity(mmi))
+  #if(class(valid) == "character")stop(valid)
   mmi_s <- subsample(mmi, rand)
   mmi_s <- score(mmi_s)
   
   oe <- new("oe", bugs, stations)
+  stopifnot(CSCI:::validity(oe))
   oe_s <- subsample(oe, rand)
   oe_s <- score(oe_s)
   
