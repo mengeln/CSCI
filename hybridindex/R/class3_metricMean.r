@@ -87,7 +87,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     names(reportlist)[length(reportlist)] <- "Suppl1_mmi"
   }
 
-  predict <- predict(oe_stuff[[1]],newdata=object@predictors[,oe_stuff[[4]]],type='prob')
+  predict <- predict(oe_stuff[[1]],newdata=unique(object@predictors[,oe_stuff[[4]]]),type='prob')
   colnames(predict) <- paste0("pGroup", 1:11)
   
   predict2 <- data.frame(StationCode = sapply(strsplit(row.names(predict), "%"), `[`, 1),
@@ -99,40 +99,46 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   }
   
   if("Suppl1_OE" %in% report){
-    E <- cbind(object@mean.metric[, c("SampleID", "StationCode")], 
+    object@predictors$StationCode <- as.character(object@predictors$StationCode)
+    E <- cbind(StationCode = unique(object@predictors$StationCode), 
                  predict %*% apply(oe_stuff[[2]],2,function(x){tapply(x,oe_stuff[[3]],function(y){sum(y)/length(y)})}))
+    E <- merge(object@predictors[, c("StationCode", "SampleID")], melt(as.data.frame(E), id.vars="StationCode"),
+               all=TRUE, by = "StationCode")
     object@oesubsample$Replicate_mean <- apply(object@oesubsample[, paste("Replicate", 1:20)], 1, mean)
     O <- dcast(object@oesubsample, SampleID + StationCode ~ STE, value.var="Replicate_mean", sum, na.rm=TRUE)
-    ids <- c("SampleID", "StationCode")
-    result <- merge(melt(E, id.vars=ids), melt(O, id.vars=ids), by=c("variable", ids), all.x=TRUE)
-    names(result) <- c("OTU", "SampleID", "StationCode", "CaptureProb", "Mean Observed")
+    O <- melt(O, id.vars=c("SampleID", "StationCode"))
+    
+    result <- merge(E, O, by=c("variable", "StationCode", "SampleID"), all=TRUE)
+    names(result) <- c("OTU", "StationCode", "SampleID", "CaptureProb", "Mean Observed")
     result$"Mean Observed"[is.na(result$"Mean Observed")] <- 0
     reportlist <- add(result[, c("SampleID", "StationCode", "OTU", "CaptureProb", "Mean Observed")])
     names(reportlist)[length(reportlist)] <- "Suppl1_OE"
   }
   if("Suppl2_OE" %in% report){
-    E <- cbind(object@mean.metric[, c("SampleID", "StationCode")], 
+    E <- cbind(StationCode = unique(object@predictors$StationCode), 
                predict %*% apply(oe_stuff[[2]],2,function(x){tapply(x,oe_stuff[[3]],function(y){sum(y)/length(y)})}))
-    E <- melt(E, id.vars=c("SampleID", "StationCode"))
-    names(E)[3:4] <- c("OTU", "CaptureProb") 
+    E <- melt(as.data.frame(E), id.vars="StationCode")
+    names(E)[2:3] <- c("OTU", "CaptureProb") 
     O <- object@oesubsample[, c("SampleID", "StationCode", "STE", paste("Replicate", 1:20))]
     O <- dcast(melt(O, id.vars=c("SampleID", "StationCode", "STE")), SampleID + StationCode + STE ~ variable,
                     value.var="value", fun.aggregate=sum)
     names(O)[3] <- c("OTU")
-    result <- merge(E, O, by=c("SampleID", "StationCode", "OTU"))
+    result <- merge(E, O, by=c("StationCode", "OTU"))
     
     x <- result
     x[, 5:24] <- colwise(function(x)ifelse(x > 0, 1, 0))(x[, 5:24])
     
     
+
     test <- sapply(paste("Replicate", 1:20), function(rep){
-      daply(x, "SampleID", function(df){
+     sapply(split(x, x$SampleID), function(df){
         captable <- reportlist$Suppl1_OE[reportlist$Suppl1_OE$SampleID == unique(df$SampleID), ]
         ingroup <- as.character(captable$OTU[captable$CaptureProb > 0.5])
         sum(df[df$OTU %in% ingroup, rep] > 0)/
-          sum(captable$CaptureProb[captable$OTU %in% ingroup])
+          sum(as.numeric(captable$CaptureProb[captable$OTU %in% ingroup]))
       })
     })
+    
     if(length(unique(reportlist$Suppl1_OE$SampleID)) == 1){
       test <- t(test)
       row.names(test) <- unique(reportlist$Suppl1_OE$SampleID)
@@ -141,6 +147,8 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
                          reportlist$Suppl1_OE$StationCode[match(row.names(test), reportlist$Suppl1_OE$SampleID)],
                        "OTU" = "OoverE", CaptureProb = NA, test, row.names=NULL)
     names(test)[5:24] <- paste("Replicate", 1:20)
+    
+    
     reportlist <- add(rbind(result, test))
     names(reportlist)[length(reportlist)] <- "Suppl2_OE"
     names(reportlist$Suppl2_OE)[5:24] <- paste0("Iteration", 1:20)

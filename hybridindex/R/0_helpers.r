@@ -7,26 +7,23 @@ validity <-   function(object){
                         "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
                         "CaO_Mean")
   if(!(all(bugcolumns %in% names(object@bugdata))))
-    return(paste("Bug data missing column:", bugcolumns[!(bugcolumns %in% names(object@bugdata))], collapse=" & "))
+    return(print(paste("Bug data missing column:", bugcolumns[!(bugcolumns %in% names(object@bugdata))], collapse=" & ")))
   BMI(object@bugdata)
   if(any(is.na(as.matrix(object@bugdata[, bugcolumns[-5]]))))
-    return(paste("NAs found in bug data."))
+    return(print(paste("NAs found in bug data.")))
 
 
   if(!(all(predictorcolumns %in% names(object@predictors))))
-    return(paste("Predictors missing column:", predictorcolumns[!(predictorcolumns %in% names(object@predictors))], collapse=" & "))
+    return(print(paste("Predictors missing column:", predictorcolumns[!(predictorcolumns %in% names(object@predictors))], collapse=" & ")))
   if(any(is.na(as.matrix(object@predictors[, predictorcolumns]))))
-    return(paste("NAs found in predictor data"))
+    return(print(paste("NAs found in predictor data")))
 
   if(!("AREA_SQKM" %in% names(object@predictors)) & !("LogWSA" %in% names(object@predictors)))
-    return("Predictors must include a column AREA_SQKM or LogWSA")
+    return(print("Predictors must include a column AREA_SQKM or LogWSA"))
   if(!all(as.character(object@bugdata$StationCode) %in% as.character(object@predictors$StationCode)))
-    return("All StationCode IDs must be represented in both bug and predictor data")
+    return(print("All StationCode IDs must be represented in both bug and predictor data"))
   if(length(unique(object@bugdata$SampleID)) != nrow(unique(object@bugdata[, c("StationCode", "SampleID")])))
-    return("SampleIDs must be unique to one StationCode")
-  if(sum(duplicated(paste(object@bugdata$SampleID, object@bugdata$FinalID, object@bugdata$LifeStageCode, 
-                       object@bugdata$Distinct)) > 0))
-    return("Duplicated data detected in 'bugs' data frame")
+    return(print("SampleIDs must be unique to one StationCode"))
   TRUE
 }
 

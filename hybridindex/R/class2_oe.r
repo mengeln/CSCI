@@ -24,14 +24,9 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   names(object@oeresults)[2] <- "Count"
   ###Clean data###
   object@bugdata$Taxa <- str_trim(object@bugdata$Taxa)
-  ###Aggregate taxa###
-#   object@bugdata <- ddply(object@bugdata, "SampleID", function(df){
-#     ddply(df, "Taxa", function(sdf){
-#       id <- unique(sdf[, !(colnames(sdf) %in% "Result")])
-#       Result <- sum(sdf$Result)
-#       cbind(id, Result)
-#     })
-#   })
+  ##Aggregate taxa###
+  object@bugdata <- ddply(object@bugdata, .(SampleID, StationCode, Taxa, LifeStageCode, Distinct),
+                          summarize, Result = sum(Result))
 
   ###Match to STE###
   load(system.file("metadata.rdata", package="BMIMetrics"))

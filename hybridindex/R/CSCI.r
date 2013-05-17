@@ -71,7 +71,6 @@
 CSCI <- function (bugs, stations, rand = sample.int(10000, 1)) {
   mmi <- new("mmi", bugs, stations)
   stopifnot(CSCI:::validity(mmi))
-  #if(class(valid) == "character")stop(valid)
   mmi_s <- subsample(mmi, rand)
   mmi_s <- score(mmi_s)
   
