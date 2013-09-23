@@ -1,0 +1,45 @@
+SampleID,StationCode,BugCode,SampleDate,CollectionMethodCode,Replicate,FinalID,SAFIT1__OTU_a,BAResult,LifeStageCode,Distinct,Invasive,SAFIT1,SAFIT2,Family,SiteSet,SiteStatus,SelectedSamples
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Thienemanniella,Orthocladiinae,9,L,0,0,Chironomidae,Thienemanniella,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Callibaetis,Callibaetis,8,L,0,0,Callibaetis,Callibaetis,Baetidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Tropisternus,Tropisternus,2,L,0,0,Tropisternus,Tropisternus,Hydrophilidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Dasyhelea,Dasyhelea,43,L,0,0,Dasyhelea,Dasyhelea,Ceratopogonidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Tanytarsus,Chironominae,9,L,0,0,Chironomidae,Tanytarsus,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Zavrelimyia/ Paramerina,Tanypodinae,135,L,0,0,Chironomidae,Zavrelimyia/ Paramerina,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Euparyphus,Caloparyphus_Euparyphus,1,L,0,0,Euparyphus,Euparyphus,Stratiomyidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Psectrocladius,Orthocladiinae,11,L,0,0,Chironomidae,Psectrocladius,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Caloparyphus/ Euparyphus,Caloparyphus_Euparyphus,2,L,0,0,Caloparyphus/ Euparyphus,Caloparyphus/ Euparyphus,Stratiomyidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Baetis tricaudatus,Baetis,33,L,0,0,Baetis,Baetis tricaudatus,Baetidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Paracladopelma,Chironominae,1,L,0,0,Chironomidae,Paracladopelma,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Thienemannimyia group,Tanypodinae,1,L,0,0,Chironomidae,Thienemannimyia group,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Cricotopus nostocicola,Orthocladiinae,3,L,0,0,Chironomidae,Cricotopus nostocicola,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Arrenurus,Acari,1,X,0,0,Arrenurus,Arrenurus,Arrenuridae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Rheotanytarsus,Chironominae,61,L,0,0,Chironomidae,Rheotanytarsus,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Lymnaea,Lymnaea,1,X,0,0,Lymnaea,Lymnaea,Lymnaeidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Limonia,Limonia,1,L,0,0,Limonia,Limonia,Tipulidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Paratanytarsus,Chironominae,10,L,0,0,Chironomidae,Paratanytarsus,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Odontomyia/ Hedriodiscus,Hedriodiscus_Odontomyia,1,L,0,0,Odontomyia/ Hedriodiscus,Odontomyia/ Hedriodiscus,Stratiomyidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Muscidae,Muscidae,2,L,0,0,Muscidae,Muscidae,Muscidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Ostracoda,Ostracoda,15,X,0,0,Ostracoda,Ostracoda,,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Stictotarsus,Stictotarsus,2,A,0,0,Stictotarsus,Stictotarsus,Dytiscidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Physa,Physa_Physella,39,X,0,0,Physa,Physa,Physidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Coenagrionidae,Ambiguous,1,L,0,0,Coenagrionidae,Coenagrionidae,Coenagrionidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Tricorythodes,Tricorythodes,1,L,0,0,Tricorythodes,Tricorythodes,Leptohyphidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Cricotopus,Orthocladiinae,47,L,0,0,Chironomidae,Cricotopus,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Macropelopiini,Tanypodinae,1,L,0,0,Chironomidae,Macropelopiini,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Cricotopus trifascia group,Orthocladiinae,1,L,0,0,Chironomidae,Cricotopus trifascia group,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Eukiefferiella,Orthocladiinae,4,L,0,0,Chironomidae,Eukiefferiella,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Microtendipes pedellus group,Chironominae,15,L,0,0,Chironomidae,Microtendipes pedellus group,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Atractides,Acari,3,X,0,0,Atractides,Atractides,Hygrobatidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Pentaneura,Tanypodinae,5,L,0,0,Chironomidae,Pentaneura,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Sperchon,Acari,1,X,0,0,Sperchon,Sperchon,Sperchontidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Dicrotendipes,Chironominae,24,L,0,0,Chironomidae,Dicrotendipes,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Parametriocnemus,Orthocladiinae,5,L,0,0,Chironomidae,Parametriocnemus,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Ceratopogonidae,Ambiguous,17,P,0,0,Ceratopogonidae,Ceratopogonidae,Ceratopogonidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Stictotarsus,Stictotarsus,2,L,0,0,Stictotarsus,Stictotarsus,Dytiscidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Dixa,Dixa,1,L,0,0,Dixa,Dixa,Dixidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Centroptilum,Centroptilum,8,L,0,0,Centroptilum,Centroptilum,Baetidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Simulium,Simulium,2,L,0,0,Simulium,Simulium,Simuliidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Pseudochironomus,Chironominae,5,L,0,0,Chironomidae,Pseudochironomus,Chironomidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Fallceon quilleri,Fallceon,11,L,0,0,Fallceon quilleri,Fallceon quilleri,Baetidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Hydroptila,Hydroptila,3,L,0,0,Hydroptila,Hydroptila,Hydroptilidae,RefVal,Reference,Selected
+312CAW052_312CAW052_5/14/2003 0:00:00_BMI_RWB_1,312CAW052,312CAW052,5/14/2003 0:00,BMI_RWB,1,Dolichopodidae,Dolichopodidae,1,L,0,0,Dolichopodidae,Dolichopodidae,Dolichopodidae,RefVal,Reference,Selected
