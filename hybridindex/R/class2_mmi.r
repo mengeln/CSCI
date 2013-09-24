@@ -104,10 +104,7 @@ setMethod("rForest", "mmi", function(object){
   
   if(is.null(object@predictors$LogWSA))
     object@predictors$LogWSA <-log10(object@predictors$AREA_SQKM)
-  if(is.null(object@predictors$AREA_SQKM))
-    object@predictors$AREA_SQKM <- 10^(object@predictors$LogWSA)
   object@predictors$Log_P_MEAN <-  log10(object@predictors$P_MEAN + 0.00001)
-  object@predictors$Log_N_MEAN <-  log10(object@predictors$N_MEAN + 0.00001)
   
   res <- sapply(final.forests, function(rf)predict(rf, object@predictors))
   if(class(res)!="matrix")res <- data.frame(t(res[1:8]))

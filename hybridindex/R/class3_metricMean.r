@@ -30,8 +30,6 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     reportlist[[length(reportlist)+1]] <- obj
     reportlist
   }
-#   Count <- ddply(object@bugdata, "SampleID", function(df)sum(df$BAResult))
-#   object@mean.metric$Count <- Count[match(Count$SampleID, object@mean.metric$SampleID), 2]
   object@mean.metric$Number_of_MMI_Iterations <- ifelse(object@mean.metric$Count >= 500, 20, 1)
   object@mean.metric$Number_of_OE_Iterations <- 
     ifelse(object@mean.metric$Count - object@mean.metric$Count*(object@ambiguous$individuals/100) >= 400, 20, 1)
@@ -41,7 +39,6 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
                                                                         object@mean.metric$SampleID)]
   object@mean.metric$overall_flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
                                             "Adequate", "Inadequate")
-  #object@mean.metric <- object@mean.metric[, c(1:2, 6:9, 3:5)]
   object@mean.metric$mmi_count_flag <- ifelse(object@mean.metric$Count >=450, "Adequate", "Inadequate")
   object@mean.metric$ambig_count_flag <- ifelse(object@mean.metric$Pcnt_Ambiguous_Individuals < 20, "Adequate", "Inadequate")
   
@@ -54,10 +51,6 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     res[res == ""] <- "All within range"
     res
   }
-#   object@mean.metric$Model_Experience_Flag_range <- predcheck(object@predictors)
-#   object@mean.metric$Model_Experience_Flag_multivariate_experimental <- isInside(object@predictors,
-#                                                                     refcaldata = refcal,
-#                                                                     averageImp = averageMSE)$outlier
     
   if("core" %in% report){
     object@mean.metric$E <- object@fulliterations[[1]]$E[match(object@mean.metric$SampleID,
@@ -69,8 +62,6 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
                                              "Pcnt_Ambiguous_Taxa",
                                              "mmi_count_flag",
                                              "ambig_count_flag",
-                                             #"Model_Experience_Flag_range", 
-                                             #"Model_Experience_Flag_multivariate_experimental",
                                              "E", "Mean_O", "OoverE", 
                                              "MMI_Score", "CSCI")])
     names(reportlist) <- "core"
