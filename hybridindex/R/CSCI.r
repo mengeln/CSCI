@@ -76,7 +76,9 @@ CSCI <- function (bugs, stations, rand = sample.int(10000, 1), purge = FALSE) {
   }
   
   mmi <- new("mmi", bugs, stations)
-  stopifnot(CSCI:::validity(mmi))
+  valid <- CSCI:::validity(mmi)
+  
+  if(class(valid) != "logical")stop(valid)
   mmi_s <- subsample(mmi, rand)
   mmi_s <- score(mmi_s)
   
