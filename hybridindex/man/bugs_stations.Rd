@@ -8,7 +8,7 @@
   and "stations" type data frame (GIS-based site data) for
   the CSCI function. This is a toy data set and should not
   be used to make any inferences about the health of the
-  described sites.
+  included sites.
 
   The bugs data frame contains the following: \itemize{
   \item StationCode: A code for the location of the sample
@@ -31,16 +31,16 @@
   watershed in square kilometers \item New_Long: The site's
   longitude \item New_Lat: The site's latitude \item
   SITE_ELEV: Elevation in ??? \item TEMP_00_09: The average
-  temperature from 2000 to 2009 in degrees C / 100 \item
-  PPT_00_09: The average precipatation from 2000 to 2009 in
-  ??? / ??? \item SumAve_P: ??? \item KFCT_AVE: ??? \item
-  BDH_AVE: ??? \item MgO_Mean: Average soil magnesium oxide
-  in ??? \item P_MEAN: ??? \item CaO_Mean: Average
-  calcareous soils in ??? \item PRMH_AVE: ??? \item S_Mean:
-  ??? \item PCT_SEDIM: Percent sedimentary geology \item
-  LRPREM_mean: ??? \item N_MEAN: ??? \item LogWSA:
-  \code{log10} of the AREA_SQKM. Not needed if AREA_SQKM is
-  present. }
+  temperature from 2000 to 2009 in hundredths of degrees C
+  \item PPT_00_09: The average precipatation from 2000 to
+  2009 in hundredths of millimeters \item SumAve_P: ???
+  \item KFCT_AVE: ??? \item BDH_AVE: ??? \item MgO_Mean:
+  Average soil magnesium oxide in ??? \item P_MEAN: ???
+  \item CaO_Mean: Average calcareous soils in ??? \item
+  PRMH_AVE: ??? \item S_Mean: ??? \item PCT_SEDIM: Percent
+  sedimentary geology \item LRPREM_mean: ??? \item N_MEAN:
+  ??? \item LogWSA: \code{log10} of the AREA_SQKM. Not
+  needed if AREA_SQKM is present. }
 }
 \seealso{
   \code{\link{CSCI}}, for processing these data

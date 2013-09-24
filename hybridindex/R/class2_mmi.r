@@ -72,24 +72,21 @@ setMethod("metrics", "mmi", function(object){
     result <- lapply(replicate_list, function(x){
       x <- subset(x, BAResult > 0)
       x[, list(
-        Shannon_Diversity = diversity(tapply(BAResult, as.character(SAFIT1), sum), index= "shannon"),
-        Intolerant_PercentTaxa = nrow(.SD[distinct=="Distinct" & ToleranceValue <= 2])/nrow(.SD[distinct=="Distinct"]),
-        ToleranceValue = sum(BAResult * ToleranceValue, na.rm=T)/sum(BAResult),
-        CFCG_Taxa = nrow(.SD[distinct=="Distinct" & (FunctionalFeedingGroup == "CF" | FunctionalFeedingGroup == "CG")]),
+        Clinger_PercentTaxa = nrow(.SD[distinct=="Distinct" & (Habit == "CN")])/nrow(.SD[distinct=="Distinct"]),
+        Coleoptera_PercentTaxa = nrow(.SD[distinct=="Distinct" & (Order == "Coleoptera")])/nrow(.SD[distinct=="Distinct"]),
+        Taxonomic_Richness = length(unique(.SD[distinct=="Distinct", FinalID])),
+        EPT_PercentTaxa = nrow(.SD[distinct=="Distinct" & (Order %in% c("Ephemeroptera", "Plecoptera", "Trichoptera"))])/nrow(.SD[distinct=="Distinct"]),
         Shredder_Taxa = nrow(.SD[distinct=="Distinct" & (FunctionalFeedingGroup == "SH")]),
-        Clinger_Taxa = nrow(.SD[distinct=="Distinct" & (Habit == "CN")]),
-        Coleoptera_Taxa = nrow(.SD[distinct=="Distinct" & (Order == "Coleoptera")]),
-        Noninsect_PercentTaxa = nrow(.SD[distinct=="Distinct" & (Class != "Insecta")])/nrow(.SD[distinct=="Distinct"])  
-      ),
-        by=SampleID]})
+        Intolerant_Percent = sum(.SD[ToleranceValue >= 8, BAResult])/sum(BAResult)
+      ), by=SampleID]})
     result.df <- lapply(result, data.frame)
+    endpoint <- length(csci_metrics) + 1
     result.df <- lapply(1:20, function(i){
-      names(result.df[[i]]) <- c("SampleID", paste0(names(result.df[[i]])[2:9], i))
+      names(result.df[[i]]) <- c("SampleID", paste0(names(result.df[[i]])[2:endpoint], i))
       result.df[[i]]
     })
     result.reduce <- Reduce(function(x,y)merge(x,y, by="SampleID"), result.df)
-    names <- c("Shannon_Diversity", "Intolerant_PercentTaxa", "ToleranceValue",
-               "CFCG_Taxa", "Shredder_Taxa", "Clinger_Taxa", "Coleoptera_Taxa", "Noninsect_PercentTaxa")
+    names <- csci_metrics
     means <- sapply(names, function(names)apply(result.reduce[, grep(names, names(result.reduce))], 1, mean))
     if(class(means) != "matrix")means <- t(means)
     result_final <- cbind(result.reduce, means)
@@ -101,7 +98,7 @@ setMethod("metrics", "mmi", function(object){
 
 setMethod("rForest", "mmi", function(object){
   if(nrow(object@metrics) == 0){object <- metrics(object)}
-  load(system.file("data", "Metrics.RFModels.RData",  package="CSCI"))
+  load(system.file("data", "Metrics.RFModels_v2.RData",  package="CSCI"))
   object@predictors <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), object@predictors, by="StationCode", all.x=TRUE)
   object@modelprediction <- as.data.frame(matrix(NA, nrow = nrow(object@predictors)))
   
@@ -116,17 +113,15 @@ setMethod("rForest", "mmi", function(object){
   if(class(res)!="matrix")res <- data.frame(t(res[1:8]))
   
   object@modelprediction <- as.data.frame(res)
-  names(object@modelprediction) <- c("Shannon_Diversity", "Intolerant_PercentTaxa", "ToleranceValue",
-                                     "CFCG_Taxa", "Shredder_Taxa", "Clinger_Taxa", "Coleoptera_Taxa", "Noninsect_PercentTaxa")
+  names(object@modelprediction) <- csci_metrics
   object@modelprediction$V1 <- unique(object@predictors$SampleID)
   return(object)
 })
 
 setMethod("score", "mmi", function(object){
   if(nrow(object@modelprediction) == 0){object <- rForest(object)}
-  load(system.file("data", "maxmin.rdata",  package="CSCI"))
-  col_names <- c("Shannon_Diversity", "Intolerant_PercentTaxa", "ToleranceValue",
-                 "CFCG_Taxa", "Shredder_Taxa", "Clinger_Taxa", "Coleoptera_Taxa", "Noninsect_PercentTaxa")
+  load(system.file("data", "maxmin_v2.rdata",  package="CSCI"))
+  col_names <- csci_metrics
   object@metrics <- object@metrics[order(object@metrics$SampleID), ]
   object@modelprediction <- object@modelprediction[order(object@modelprediction$V1), ]
   
@@ -140,7 +135,7 @@ setMethod("score", "mmi", function(object){
   object@result <- data.frame(object_result)
   names(object@result) <- paste0(col_names, "_score")
   object@finalscore <- data.frame(unique(object@modelprediction$V1), 
-                                  apply(object@result, 1, mean)/0.808484)
+                                  apply(object@result, 1, mean)/0.628016448)
   d <- data.frame(object@finalscore, object@metrics[, col_names], 
                   object@modelprediction, object@result)
   d <- merge(unique(object@bugdata[, c("StationCode", "SampleID")]), d, by.x="SampleID", by.y="unique.object.modelprediction.V1.")

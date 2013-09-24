@@ -1,11 +1,15 @@
+csci_predictors <- c("BDH_AVE", "CaO_Mean", "ELEV_RANGE", "KFCT_AVE",
+                     "P_MEAN", "LogWSA", "LPREM_mean", "New_Lat",
+                     "New_Long", "PPT_00_09", "PRMH_AVE", "S_Mean", 
+                     "SITE_ELEV", "SumAve_P", "TEMP_00_09")
+csci_metrics <- c("Clinger_PercentTaxa", "Coleoptera_PercentTaxa", "Taxonomic_Richness", 
+                  "EPT_PercentTaxa", "Shredder_Taxa", "Intolerant_Percent")
+
 ###Validity helper###
 
 validity <-   function(object){
   bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "Distinct", "LifeStageCode")
-  predictorcolumns <- c("StationCode", "New_Lat",     "New_Long",    "ELEV_RANGE",  "BDH_AVE",     "PPT_00_09",  
-                        "LPREM_mean",  "KFCT_AVE",    "TEMP_00_09",  "P_MEAN",      "N_MEAN",      "PRMH_AVE",   
-                        "SITE_ELEV",   "MgO_Mean",    "S_Mean",      "SumAve_P",   
-                        "CaO_Mean")
+  predictorcolumns <- csci_predictors
   if(!(all(bugcolumns %in% names(object@bugdata))))
     return(print(paste("Bug data missing column:", bugcolumns[!(bugcolumns %in% names(object@bugdata))], collapse=" & ")))
   BMI(object@bugdata)
@@ -120,10 +124,7 @@ model.predict.RanFor.4.2 <-function(bugcal.pa,grps.final,preds.final,ranfor.mod,
 } #end of function;
 
 isInside <- function(newdata, refcaldata, averageImp, confidence = 0.99){
-  predictors <- c("New_Long", "New_Lat", "SITE_ELEV", 
-                  "ELEV_RANGE", "TEMP_00_09", "PPT_00_09", "SumAve_P", "KFCT_AVE", 
-                  "BDH_AVE", "MgO_Mean", "P_MEAN", "CaO_Mean", "PRMH_AVE", "S_Mean", 
-                  "PCT_SEDIM", "LPREM_mean", "N_MEAN", "LogWSA")
+  predictors <- csci_predictors
   refcal <- scale(refcaldata[, predictors])
   
   refcal <- refcal[, averageImp$variable] * averageImp$Importance

@@ -76,9 +76,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     names(reportlist) <- "core"
   }
   
-  names <- c("Shannon_Diversity", "Intolerant_PercentTaxa",
-             "ToleranceValue", "Shredder_Taxa", "Clinger_Taxa", "Coleoptera_Taxa", 
-             "Noninsect_PercentTaxa", "CFCG_Taxa")
+  names <- csci_metrics
   if("Suppl1_mmi" %in% report){
     model <- object@modelprediction[, names]
     names(model) <- paste0(names(model), "_predicted")
