@@ -68,7 +68,13 @@
 
 
 
-CSCI <- function (bugs, stations, rand = sample.int(10000, 1)) {
+CSCI <- function (bugs, stations, rand = sample.int(10000, 1), purge = FALSE) {
+  if(purge) {
+    load(system.file("metadata.rdata",  package="BMIMetrics"))
+    good <- paste(bugs$FinalID, bugs$LifeStageCode) %in% paste(metadata$FinalID, metadata$LifeStageCode)
+    bugs <- bugs[good, ]
+  }
+  
   mmi <- new("mmi", bugs, stations)
   stopifnot(CSCI:::validity(mmi))
   mmi_s <- subsample(mmi, rand)
