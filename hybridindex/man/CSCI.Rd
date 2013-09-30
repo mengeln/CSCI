@@ -2,7 +2,8 @@
 \alias{CSCI}
 \title{Score samples using the CSCI tool}
 \usage{
-  CSCI(bugs, stations, rand = sample.int(10000, 1))
+  CSCI(bugs, stations, rand = sample.int(10000, 1),
+    purge = FALSE)
 }
 \arguments{
   \item{bugs}{A data frame with BMI data (see details)}
@@ -13,6 +14,12 @@
   \item{rand}{An integer to control the random number
   generator (RNG) seed for the subsampling. By default set
   to \code{sample.int(10000, 1)}}
+
+  \item{purge}{A logical value indicating whether
+  FinalID/LifeStageCode combinations not in the internal
+  database should be removed from the data. If TRUE, purged
+  taxa will be listed in output. If FALSE (default), any
+  unrecognized combinations will cause an error.}
 }
 \value{
   A list of data frames that serve as reports in varying

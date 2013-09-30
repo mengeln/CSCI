@@ -28,7 +28,7 @@ validity <-   function(object){
     return(print("All StationCode IDs must be represented in both bug and predictor data"))
   if(length(unique(object@bugdata$SampleID)) != nrow(unique(object@bugdata[, c("StationCode", "SampleID")])))
     return(print("SampleIDs must be unique to one StationCode"))
-  TRUE
+  "pass"
 }
 
 

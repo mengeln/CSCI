@@ -143,7 +143,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     names(reportlist$Suppl2_OE)[5:24] <- paste0("Iteration", 1:20)
   }
   if(all(c("Suppl2_mmi", "Suppl1_mmi") %in% report)){
-    load(system.file("data", "maxmin.rdata",  package="CSCI"))
+    load(system.file("data", "maxmin_v2.rdata",  package="CSCI"))
     
     cmmi <- melt(object@metrics, id.vars="SampleID")
     cmmi$variable <- as.character(cmmi$variable)

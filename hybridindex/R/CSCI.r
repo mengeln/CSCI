@@ -34,6 +34,9 @@
 #' @param stations A data frame with environmental data, one row per station (see details)
 #' @param rand An integer to control the random number generator (RNG) seed for the subsampling. By default set to
 #' \code{sample.int(10000, 1)}
+#' @param purge A logical value indicating whether FinalID/LifeStageCode combinations not in the internal
+#' database should be removed from the data. If TRUE, purged taxa will be listed in output. If FALSE (default),
+#' any unrecognized combinations will cause an error.
 #' @export
 #' 
 #' @return 
@@ -69,24 +72,37 @@
 
 
 CSCI <- function (bugs, stations, rand = sample.int(10000, 1), purge = FALSE) {
+  options(stringsAsFactors=FALSE)
+  
   if(purge) {
     load(system.file("metadata.rdata",  package="BMIMetrics"))
-    good <- paste(bugs$FinalID, bugs$LifeStageCode) %in% paste(metadata$FinalID, metadata$LifeStageCode)
+    IDStage <- paste(bugs$FinalID, bugs$LifeStageCode)
+    good <- IDStage %in% paste(metadata$FinalID, metadata$LifeStageCode)
+    purged <- unique(IDStage[!good])
     bugs <- bugs[good, ]
   }
   
-  mmi <- new("mmi", bugs, stations)
-  valid <- CSCI:::validity(mmi)
+  caseFix <- data.frame(upper = toupper(csci_predictors), 
+                        correct = csci_predictors)
+  predCols <- toupper(names(stations)) %in% caseFix$upper
+  names(stations)[predCols] <- caseFix$correct[match(toupper(names(stations)[predCols]),
+                                           caseFix$upper)]
   
-  if(class(valid) != "logical")stop(valid)
+  
+  mmi <- new("mmi", bugs, stations)
+  valid <- validity(mmi)
+  mmi <- new("mmi", bugs, stations[, c("StationCode", csci_predictors)])
+  
+  if(valid != "pass")stop(valid)
   mmi_s <- subsample(mmi, rand)
   mmi_s <- score(mmi_s)
   
   oe <- new("oe", bugs, stations)
-  stopifnot(CSCI:::validity(oe))
   oe_s <- subsample(oe, rand)
   oe_s <- score(oe_s)
   
   res <- new("metricMean", mmi_s, oe_s)
-  summary(res)
+  report <- summary(res)
+  if(purge)report$purged <- purged
+  report
 }
