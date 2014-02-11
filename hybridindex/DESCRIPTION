@@ -28,3 +28,4 @@ Collate:
     'class3_metricMean.r'
     'CSCI.r'
     'data.r'
+    'cleanData.r'
