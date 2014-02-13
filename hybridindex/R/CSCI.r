@@ -88,10 +88,10 @@ CSCI <- function (bugs, stations, rand = sample.int(10000, 1), purge = FALSE) {
   names(stations)[predCols] <- caseFix$correct[match(toupper(names(stations)[predCols]),
                                            caseFix$upper)]
   
-  
+  stations$LogWSA <- log10(stations$AREA_SQKM)
   mmi <- new("mmi", bugs, stations)
   valid <- validity(mmi)
-  mmi <- new("mmi", bugs, stations[, c("StationCode", csci_predictors)])
+  
   
   if(valid != "pass")stop(valid)
   mmi_s <- subsample(mmi, rand)
