@@ -55,7 +55,7 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
 setMethod("subsample", "oe", function(object, rand = sample.int(10000, 1)){
   if(nrow(object@ambiguous)==0){object <- nameMatch(object)}
   
-  subsample <- as.data.frame(sapply(seq(1 + rand, 20 + rand), function(i){
+  subsample <- lapply(seq(1 + rand, 20 + rand), function(i){
     commMatrix <- acast(object@bugdata, SampleID ~ STE, value.var="Result", fill=0,
                         fun.aggregate = sum, na.rm=TRUE)
     samp <- rep.int(400, nrow(commMatrix))
@@ -64,13 +64,14 @@ setMethod("subsample", "oe", function(object, rand = sample.int(10000, 1)){
     set.seed(i)
     
     commMatrix <- rrarefy(commMatrix, samp)
-      
+    
     if(i == 1+ rand)
       melt(commMatrix)
     else
       melt(commMatrix)$value
   }
-  ))
+  )
+  subsample <- do.call(cbind, subsample)
   colnames(subsample)[3:22] <- paste("Replicate", 1:20)
   subsample <- subsample[rowSums(subsample[, 3:22]) > 0, ]
   subsample$STE <- subsample$Var2
