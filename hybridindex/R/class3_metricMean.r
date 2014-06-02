@@ -39,8 +39,10 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
                                                                         object@mean.metric$SampleID)]
   object@mean.metric$overall_flag <- ifelse(object@mean.metric$Count >=450 & object@mean.metric$Pcnt_Ambiguous_Individuals < 20,
                                             "Adequate", "Inadequate")
-  object@mean.metric$mmi_count_flag <- ifelse(object@mean.metric$Count >=450, "Adequate", "Inadequate")
-  object@mean.metric$ambig_count_flag <- ifelse(object@mean.metric$Pcnt_Ambiguous_Individuals < 20, "Adequate", "Inadequate")
+  object@mean.metric$mmi_indiv_flag <- ifelse(object@mean.metric$Count >=450, "Adequate", "Inadequate")
+  object@mean.metric$ambig_indiv_flag <- with(object@mean.metric, 
+                                              ifelse(Count - (Pcnt_Ambiguous_Individuals * Count) >= 360,
+                                                     "Adequate", "Inadequate"))
   
   predcheck <- function(data){
     dat <- sapply(names(extent), function(col){
@@ -56,15 +58,27 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     object@mean.metric$E <- object@fulliterations[[1]]$E[match(object@mean.metric$SampleID,
                                                                object@fulliterations[[1]]$SampleID)]
     object@mean.metric$Mean_O <- object@mean.metric$E * object@mean.metric$OoverE
+    
+    cols <-c("StationCode", "SampleID", "Count", "Number_of_MMI_Iterations", 
+             "Number_of_OE_Iterations", "Pcnt_Ambiguous_Individuals",
+             "Pcnt_Ambiguous_Taxa",
+             "mmi_indiv_flag",
+             "ambig_indiv_flag",
+             "E", "Mean_O", "OoverE", 
+             "MMI_Score", "CSCI")
         
-    reportlist <- add(object@mean.metric[, c("StationCode", "SampleID", "Count", "Number_of_MMI_Iterations", 
-                                             "Number_of_OE_Iterations", "Pcnt_Ambiguous_Individuals",
-                                             "Pcnt_Ambiguous_Taxa",
-                                             "mmi_count_flag",
-                                             "ambig_count_flag",
-                                             "E", "Mean_O", "OoverE", 
-                                             "MMI_Score", "CSCI")])
+    reportlist <- add(object@mean.metric[, cols])
+    
     names(reportlist) <- "core"
+    reportlist$core <- within(reportlist$core, {
+      OoverE_Percentile <- round(pnorm(OoverE, mean=1, sd=0.190276), digits=2)
+      MMI_Percentile <- round(pnorm(MMI_Score, mean=1, sd=0.179124), digits=2)
+      CSCI_Percentile <- round(pnorm(CSCI, mean=1, sd=0.160299), digits=2)
+    })
+    reportlist$core <- reportlist$core[, c(cols[1:11],
+                                           "OoverE", "OoverE_Percentile",
+                                           "MMI_Score", "MMI_Percentile",
+                                           "CSCI", "CSCI_Percentile")]
   }
   
   names <- csci_metrics
@@ -172,6 +186,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     reportlist <- add(x)
     names(reportlist)[length(reportlist)] <- "Suppl2_mmi"
   }
+  reportlist$core <- rename(reportlist$core, c("MMI_Score" = "MMI"))
   if(length(reportlist)==1)transform(reportlist) else reportlist
 })
   

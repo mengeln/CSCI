@@ -82,18 +82,23 @@ CSCI <- function (bugs, stations, rand = sample.int(10000, 1), purge = FALSE) {
     bugs <- bugs[good, ]
   }
   
+  
+  
   caseFix <- data.frame(upper = toupper(csci_predictors), 
                         correct = csci_predictors)
   predCols <- toupper(names(stations)) %in% caseFix$upper
   names(stations)[predCols] <- caseFix$correct[match(toupper(names(stations)[predCols]),
                                            caseFix$upper)]
   
-  stations$LogWSA <- log10(stations$AREA_SQKM)
+  stations$LogWSA <- if(!is.null(stations$AREA_SQKM))log10(stations$AREA_SQKM)
+  
+  stations <- stations[, names(stations) %in% c("StationCode",
+                                                csci_predictors )]
   mmi <- new("mmi", bugs, stations)
   valid <- validity(mmi)
   
-  
   if(valid != "pass")stop(valid)
+  
   mmi_s <- subsample(mmi, rand)
   mmi_s <- score(mmi_s)
   

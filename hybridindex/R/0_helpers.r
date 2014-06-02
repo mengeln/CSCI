@@ -1,6 +1,6 @@
-csci_predictors <- c("BDH_AVE", "CaO_Mean", "ELEV_RANGE", "KFCT_AVE",
-                     "P_MEAN", "LogWSA", "LPREM_mean", "New_Lat",
-                     "New_Long", "PPT_00_09", "PRMH_AVE", "S_Mean", 
+csci_predictors <- c("BDH_AVE", "ELEV_RANGE", "KFCT_AVE",
+                     "P_MEAN", "LogWSA", "New_Lat",
+                     "New_Long", "PPT_00_09", 
                      "SITE_ELEV", "SumAve_P", "TEMP_00_09")
 csci_metrics <- c("Clinger_PercentTaxa", "Coleoptera_PercentTaxa", "Taxonomic_Richness", 
                   "EPT_PercentTaxa", "Shredder_Taxa", "Intolerant_Percent")
@@ -10,6 +10,9 @@ csci_metrics <- c("Clinger_PercentTaxa", "Coleoptera_PercentTaxa", "Taxonomic_Ri
 validity <-   function(object){
   bugcolumns <- c("StationCode", "SampleID", "FinalID", "BAResult", "Distinct", "LifeStageCode")
   predictorcolumns <- csci_predictors
+  if(any(duplicated(object@predictors$StationCode)))
+    return(print("Ambiguity caused by duplicate StationCodes in station data"))
+  
   if(!(all(bugcolumns %in% names(object@bugdata))))
     return(print(paste("Bug data missing column:", bugcolumns[!(bugcolumns %in% names(object@bugdata))], collapse=" & ")))
   BMI(object@bugdata)

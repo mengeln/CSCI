@@ -1,3 +1,28 @@
+#' Score samples using the CSCI tool
+#'
+#' @description
+#' Function to find or remove errors in BMI data
+#' 
+#' @details
+#' This functions checks for several types of common errors:
+#' \begin{enumerate}
+#' \item Incorrect case in FinalID names
+#' \item FinalIDs that are missing from the internal database
+#' \item FinalIDs with inappropriate life stage codes (e.g., non-insects
+#' with a LifeStageCode other than 'X')
+#' 
+#' This functions requires that the dataframe contains at least two columns:
+#' FinalID and LifeStageCode.
+#' 
+#' @param data A data frame with BMI data (see details)
+#' @param purge If true (default) a data frame will be returned
+#' with problematic rows removed. Else, a report of problems will be
+#' returned.
+#' @export
+#' 
+
+
+
 cleanData <- function(data, purge=TRUE){
   meta <- loadMetaData()
   
