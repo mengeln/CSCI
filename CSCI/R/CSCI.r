@@ -17,9 +17,8 @@
 #' document for details on these fields.
 #' 
 #' A valid "stations" data frame consists of the following columns: StationCode (must match with same column in 
-#' the "bugs" data frame), New_Lat, New_Long, AREA_SQKM , ELEV_RANGE, BDH_AVE, PPT_00_09, LPREM_mean, KFCT_AVE, 
-#' TEMP_00_09, P_MEAN, N_MEAN, PRMH_AVE, SITE_ELEV, MgO_Mean, S_Mean, SumAve_P, CaO_Mean. See CSCI guidance 
-#' document for details on these fields.
+#' the "bugs" data frame), BDH_AVE, ELEV_RANGE, KFCT_AVE, P_MEAN, LogWSA, New_Lat, New_Long, PPT_00_09,
+#' SITE_ELEV, SumAve_P, TEMP_00_09. See CSCI guidance document for details on these fields.
 #' 
 #' The data frames are also subject to the following constraints: no missing blank cells in any field in 
 #' either data frame (except for the Distinct column); all values under StationCode in the "bugs" data frame 
@@ -82,10 +81,10 @@ CSCI <- function (bugs, stations, rand = sample.int(10000, 1), purge = FALSE) {
     bugs <- bugs[good, ]
   }
   
+  names(bugs) <- csci_bugs_col[match(toupper(names(bugs)), toupper(csci_bugs_col))]
   
-  
-  caseFix <- data.frame(upper = toupper(csci_predictors), 
-                        correct = csci_predictors)
+  caseFix <- data.frame(upper = c(toupper(csci_predictors), "AREA_SQKM", "STATIONCODE"), 
+                        correct = c(csci_predictors, "AREA_SQKM", "StationCode"))
   predCols <- toupper(names(stations)) %in% caseFix$upper
   names(stations)[predCols] <- caseFix$correct[match(toupper(names(stations)[predCols]),
                                            caseFix$upper)]

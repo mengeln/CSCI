@@ -1,14 +1,13 @@
 Package: CSCI
 Type: Package
 Title: Tools for California Freshwater Biotic Assessment
-Version: 2.0
+Version: 1.0
 Date: 2013-09-24
 Author: MW Engeln
-Maintainer: <raphaelm@sccwrp.org>
+Maintainer: <marke@sccwrp.org>
 Description: Contains tools for calculating biotic integrity from taxonomic
     count data. Includes methods for a mutlitmetric index and observed over
-    expected index. A mapping function is also included that will plot station
-    results over a California base map.
+    expected index.
 License: GPL-3
 Depends:
     methods,
@@ -19,13 +18,3 @@ Depends:
     plyr,
     BMIMetrics,
     data.table
-Collate:
-    '0_generics.r'
-    '0_helpers.r'
-    'class1_bugs.r'
-    'class2_mmi.r'
-    'class2_oe.r'
-    'class3_metricMean.r'
-    'CSCI.r'
-    'data.r'
-    'cleanData.r'

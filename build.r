@@ -1,6 +1,9 @@
 # BUILD
 
 library(devtools)
+library(roxygen2)
+
+roxygenize("hybridindex")
 
 build("hybridindex/", path="../CSCI_bin/", binary=TRUE)
 install("hybridindex/", quick=FALSE)

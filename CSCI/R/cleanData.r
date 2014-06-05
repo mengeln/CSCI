@@ -5,11 +5,10 @@
 #' 
 #' @details
 #' This functions checks for several types of common errors:
-#' \begin{enumerate}
-#' \item Incorrect case in FinalID names
-#' \item FinalIDs that are missing from the internal database
-#' \item FinalIDs with inappropriate life stage codes (e.g., non-insects
-#' with a LifeStageCode other than 'X')
+#' incorrect case in FinalID names,
+#' FinalIDs that are missing from the internal database,
+#' FinalIDs with inappropriate life stage codes (e.g., non-insects
+#' with a LifeStageCode other than 'X').
 #' 
 #' This functions requires that the dataframe contains at least two columns:
 #' FinalID and LifeStageCode.

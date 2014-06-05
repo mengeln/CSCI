@@ -5,6 +5,10 @@ csci_predictors <- c("BDH_AVE", "ELEV_RANGE", "KFCT_AVE",
 csci_metrics <- c("Clinger_PercentTaxa", "Coleoptera_PercentTaxa", "Taxonomic_Richness", 
                   "EPT_PercentTaxa", "Shredder_Taxa", "Intolerant_Percent")
 
+csci_bugs_col <- c("StationCode", "SampleID", "FinalID", "Distinct", "LifeStageCode",
+                   "BAResult")
+
+
 ###Validity helper###
 
 validity <-   function(object){

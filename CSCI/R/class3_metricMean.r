@@ -62,8 +62,6 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     cols <-c("StationCode", "SampleID", "Count", "Number_of_MMI_Iterations", 
              "Number_of_OE_Iterations", "Pcnt_Ambiguous_Individuals",
              "Pcnt_Ambiguous_Taxa",
-             "mmi_indiv_flag",
-             "ambig_indiv_flag",
              "E", "Mean_O", "OoverE", 
              "MMI_Score", "CSCI")
         
@@ -75,7 +73,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
       MMI_Percentile <- round(pnorm(MMI_Score, mean=1, sd=0.179124), digits=2)
       CSCI_Percentile <- round(pnorm(CSCI, mean=1, sd=0.160299), digits=2)
     })
-    reportlist$core <- reportlist$core[, c(cols[1:11],
+    reportlist$core <- reportlist$core[, c(cols[1:9],
                                            "OoverE", "OoverE_Percentile",
                                            "MMI_Score", "MMI_Percentile",
                                            "CSCI", "CSCI_Percentile")]
@@ -85,8 +83,17 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   if("Suppl1_mmi" %in% report){
     model <- object@modelprediction[, names]
     names(model) <- paste0(names(model), "_predicted")
-    reportlist <- add(cbind(object@mean.metric[, c("SampleID", "StationCode", "MMI_Score")],
-                            object@metrics[, names], model, object@result))
+    sup1mmi <- cbind(object@mean.metric[, c("StationCode", "SampleID", "MMI_Score")],
+                     object@metrics[, names], model, object@result)
+    colorder <- c("StationCode", "SampleID", "MMI_Score", "Clinger_PercentTaxa", 
+                  "Clinger_PercentTaxa_predicted", "Clinger_PercentTaxa_score", 
+                  "Coleoptera_PercentTaxa", "Coleoptera_PercentTaxa_predicted", 
+                  "Coleoptera_PercentTaxa_score", "Taxonomic_Richness", "Taxonomic_Richness_predicted", 
+                  "Taxonomic_Richness_score", "EPT_PercentTaxa", "EPT_PercentTaxa_predicted", 
+                  "EPT_PercentTaxa_score", "Shredder_Taxa", "Shredder_Taxa_predicted", 
+                  "Shredder_Taxa_score", "Intolerant_Percent", "Intolerant_Percent_predicted", 
+                  "Intolerant_Percent_score")
+    reportlist <- add(sup1mmi[, colorder])
     names(reportlist)[length(reportlist)] <- "Suppl1_mmi"
   }
 
@@ -96,8 +103,9 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
   predict2 <- data.frame(StationCode = sapply(strsplit(row.names(predict), "%"), `[`, 1),
                         SampleID = sapply(strsplit(row.names(predict), "%"), `[`, 2),
                         predict)
+  row.names(predict2) <- NULL
   if("Suppl1_grps" %in% report){
-    reportlist <- add(merge(object@mean.metric[, c("SampleID", "StationCode")], predict2))
+    reportlist <- add(unique(predict2[, -2]))
     names(reportlist)[length(reportlist)] <- "Suppl1_grps"
   }
   
@@ -112,9 +120,9 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     O <- melt(O, id.vars=c("SampleID", "StationCode"))
     
     result <- merge(E, O, by=c("variable", "StationCode", "SampleID"), all=TRUE)
-    names(result) <- c("OTU", "StationCode", "SampleID", "CaptureProb", "Mean Observed")
-    result$"Mean Observed"[is.na(result$"Mean Observed")] <- 0
-    reportlist <- add(result[, c("SampleID", "StationCode", "OTU", "CaptureProb", "Mean Observed")])
+    names(result) <- c("OTU", "StationCode", "SampleID", "CaptureProb", "MeanObserved")
+    result$MeanObserved[is.na(result$MeanObserved)] <- 0
+    reportlist <- add(result[, c("StationCode", "SampleID", "OTU", "CaptureProb", "MeanObserved")])
     names(reportlist)[length(reportlist)] <- "Suppl1_OE"
   }
   if("Suppl2_OE" %in% report){
@@ -151,8 +159,8 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
                        "OTU" = "OoverE", CaptureProb = NA, test, row.names=NULL)
     names(test)[5:24] <- paste("Replicate", 1:20)
     
-    
-    reportlist <- add(rbind(result, test))
+    combinedres <- rbind(result, test)
+    reportlist <- add(combinedres[, c(1, 4, 2, 3, 5:ncol(combinedres))])
     names(reportlist)[length(reportlist)] <- "Suppl2_OE"
     names(reportlist$Suppl2_OE)[5:24] <- paste0("Iteration", 1:20)
   }
