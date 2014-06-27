@@ -30,7 +30,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     reportlist[[length(reportlist)+1]] <- obj
     reportlist
   }
-  object@mean.metric$Number_of_MMI_Iterations <- ifelse(object@mean.metric$Count >= 500, 20, 1)
+  object@mean.metric$Number_of_MMI_Iterations <- ifelse(object@mean.metric$Count > 500, 20, 1)
   object@mean.metric$Number_of_OE_Iterations <- 
     ifelse(object@mean.metric$Count - object@mean.metric$Count*(object@ambiguous$individuals/100) >= 400, 20, 1)
   object@mean.metric$Pcnt_Ambiguous_Individuals <- object@ambiguous$individuals[match(object@ambiguous$SampleID,
