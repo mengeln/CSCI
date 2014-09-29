@@ -97,11 +97,8 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     names(reportlist)[length(reportlist)] <- "Suppl1_mmi"
   }
 
-  View(object@predictors[,oe_stuff[[4]]])
-  View(unique(object@predictors[,oe_stuff[[4]]]))
   
   predict <- predict(oe_stuff[[1]],newdata=unique(object@predictors[,oe_stuff[[4]]]),type='prob')
-  print(predict)
   colnames(predict) <- paste0("pGroup", 1:11)
   
   predict2 <- data.frame(StationCode = sapply(strsplit(row.names(predict), "%"), `[`, 1),
