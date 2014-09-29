@@ -77,7 +77,7 @@ setMethod("metrics", "mmi", function(object){
         Taxonomic_Richness = length(unique(.SD[distinct=="Distinct", FinalID])),
         EPT_PercentTaxa = nrow(.SD[distinct=="Distinct" & (Order %in% c("Ephemeroptera", "Plecoptera", "Trichoptera"))])/nrow(.SD[distinct=="Distinct"]),
         Shredder_Taxa = nrow(.SD[distinct=="Distinct" & (FunctionalFeedingGroup == "SH")]),
-        Intolerant_Percent = sum(.SD[ToleranceValue >= 8, BAResult])/sum(BAResult)
+        Intolerant_Percent = sum(.SD[ToleranceValue <= 2, BAResult])/sum(BAResult)
       ), by=SampleID]})
     result.df <- lapply(result, data.frame)
     endpoint <- length(csci_metrics) + 1
