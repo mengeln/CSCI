@@ -39,7 +39,7 @@ setMethod("metrics", "mmi", function(object){
   
   metricsList <- lapply(1:20, function(i) {
     x <- object@subsample[[i]]
-    results <- BMIall(aggregate(x), effort=1)[c("SampleID", csci_metrics)]
+    results <- BMICSCI(aggregate(x), effort=1)[c("SampleID", csci_metrics)]
     names(results)[-1] <- paste0(names(results)[-1], "_", i)
     results
     })
