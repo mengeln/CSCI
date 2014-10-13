@@ -2,10 +2,17 @@ library(testthat)
 library(BMIMetrics)
 library(reshape2)
 library(randomForest)
+library(plyr)
 
-lapply(paste0("L:/CSCI_ME/bug_mmi/hybridindex/R/", list.files("L:/CSCI_ME/bug_mmi/hybridindex/R/")), source)
+lapply(list.files("CSCI/R/", full.names=TRUE), source)
 data(bugs_stations, package="CSCI")
+bugs <- bugs_stations[[1]]
+stations <- bugs_stations[[2]]
+mmi <- new("mmi", bugs, stations)
+str(nameMatch(mmi))
 
+newmmi <- score(mmi)
+testcsci <- CSCI(bugs_stations[[1]], bugs_stations[[2]])
 context("High level run through ")
 
 test_that("Runs through example data", {

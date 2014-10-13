@@ -1,4 +1,4 @@
-setClass("mmi", representation(subsample = "data.frame",
+setClass("mmi", representation(subsample = "list",
                                metrics = "data.frame",
                                modelprediction = "data.frame",
                                result = "data.frame",
@@ -16,83 +16,38 @@ setClass("mmi", representation(subsample = "data.frame",
          )
 )
 
-setMethod("nameMatch", "mmi", function(object, effort = 1){
-  agg <- aggregate(BMI(object@bugdata))[[effort]]
-  class(agg) <- "data.frame"
-  agg$Result <- agg$BAResult
-  agg$Taxa <- as.character(agg$FinalID)
-  agg$distinct <- agg[, paste0("distinct_SAFIT", effort)]
-  if(effort==1)x <- rename(agg, c("distinct_SAFIT1" = "distinct_SAFIT2", "SAFIT2" = "iggSAFIT2", "SAFIT1" = "SAFIT2"))
-  object@bugdata <- agg
+setMethod("nameMatch", "mmi", function(object){
+  bugs <- BMI(object@bugdata)
+  class(bugs) <- rev(class(bugs))
+  object@bugdata <- bugs
   return(object)
 })
 
-setMethod("subsample", "mmi", function(object, rand = sample.int(10000, 1)){
+setMethod("subsample", "mmi", function(object, rand = sample(10000, 1)){
   if(is.null(object@bugdata$distinct)){object <- nameMatch(object)}
   
-  subsample <- as.data.frame(sapply(seq(1 + rand, 20 + rand), function(i){
-    commMatrix <- acast(object@bugdata, SampleID ~ Taxa + LifeStageCode + distinct, value.var="BAResult", fill=0,
-                        fun.aggregate = sum, na.rm=TRUE)
-    samp <- rep.int(500, nrow(commMatrix))
-    samp[rowSums(commMatrix, na.rm=TRUE) < 500] <- 
-      rowSums(commMatrix, na.rm=TRUE)[rowSums(commMatrix, na.rm=TRUE) < 500]
+
+  object@subsample <- lapply(seq(1 + rand, 20 + rand), function(i){
     set.seed(i)
-    
-    commMatrix <- rrarefy(commMatrix, samp)
-    
-    if(i == 1+ rand)
-      melt(commMatrix)
-    else
-      melt(commMatrix)$value
-  }
-  ))
-  colnames(subsample)[3:22] <- paste("Replicate", 1:20)
-  subsample <- subsample[rowSums(subsample[, 3:22]) != 0, ]
-  break_ids <- strsplit(as.character(subsample$Var2), "_")
-  subsample$Taxa <- sapply(break_ids, `[`, 1)
-  subsample$LifeStageCode <- sapply(break_ids, `[`, 2)
-  subsample$distinct <- sapply(break_ids, `[`, 3)
-  subsample$SampleID <- subsample$Var1
-  subsample <- subsample[, c(-1, -2)]
-  object@subsample <- merge(arrange(object@bugdata, Taxa, LifeStageCode), subsample, all.x=TRUE, 
-                            by.x=c("SampleID", "SAFIT2", "LifeStageCode", "distinct"),
-                            by.y=c("SampleID", "Taxa", "LifeStageCode", "distinct"))
+    BMIMetrics:::sample(object@bugdata)
+  })
   return(object)
 })
 
 setMethod("metrics", "mmi", function(object){
-  if(nrow(object@subsample) == 0){object <- subsample(object, rand = sample.int(10000, 1))}
-  BMIall_hybrid <- function(x){
-    x$Habit <- as.character(x$Habit)
-    replicate_list <- lapply(1:20, function(i){
-      data <- x[, 1:28]
-      data$BAResult <- x[, paste("Replicate", i)]
-      data.table(data)
+  if(length(object@subsample) == 0){object <- subsample(object, rand = sample.int(10000, 1))}
+  
+  metricsList <- lapply(1:20, function(i) {
+    x <- object@subsample[[i]]
+    results <- BMIall(aggregate(x), effort=1)[c("SampleID", csci_metrics)]
+    names(results)[-1] <- paste0(names(results)[-1], "_", i)
+    results
     })
-    result <- lapply(replicate_list, function(x){
-      x <- subset(x, BAResult > 0)
-      x[, list(
-        Clinger_PercentTaxa = nrow(.SD[distinct=="Distinct" & (Habit == "CN")])/nrow(.SD[distinct=="Distinct"]),
-        Coleoptera_PercentTaxa = nrow(.SD[distinct=="Distinct" & (Order == "Coleoptera")])/nrow(.SD[distinct=="Distinct"]),
-        Taxonomic_Richness = length(unique(.SD[distinct=="Distinct", FinalID])),
-        EPT_PercentTaxa = nrow(.SD[distinct=="Distinct" & (Order %in% c("Ephemeroptera", "Plecoptera", "Trichoptera"))])/nrow(.SD[distinct=="Distinct"]),
-        Shredder_Taxa = nrow(.SD[distinct=="Distinct" & (FunctionalFeedingGroup == "SH")]),
-        Intolerant_Percent = sum(.SD[ToleranceValue <= 2, BAResult])/sum(BAResult)
-      ), by=SampleID]})
-    result.df <- lapply(result, data.frame)
-    endpoint <- length(csci_metrics) + 1
-    result.df <- lapply(1:20, function(i){
-      names(result.df[[i]]) <- c("SampleID", paste0(names(result.df[[i]])[2:endpoint], i))
-      result.df[[i]]
-    })
-    result.reduce <- Reduce(function(x,y)merge(x,y, by="SampleID"), result.df)
-    names <- csci_metrics
-    means <- sapply(names, function(names)apply(result.reduce[, grep(names, names(result.reduce))], 1, mean))
-    if(class(means) != "matrix")means <- t(means)
-    result_final <- cbind(result.reduce, means)
-    result_final
-  }
-  object@metrics <- BMIall_hybrid(object@subsample)
+  result.reduce <- Reduce(function(x,y)merge(x,y, by="SampleID"), metricsList)
+  names <- csci_metrics
+  means <- sapply(names, function(names)apply(result.reduce[, grep(names, names(result.reduce))], 1, mean))
+  if(class(means) != "matrix")means <- t(means)
+  object@metrics <- cbind(result.reduce, means)
   return(object)
 })
 

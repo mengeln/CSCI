@@ -2,7 +2,7 @@ setClass("metricMean", representation(mean.metric="data.frame"),
          contains=c("mmi", "oe"))
 
 setValidity("metricMean", function(object){
-  if(!(setequal(object@subsample$SampleID, object@oesubsample$SampleID))){return("Incompatible objects")} else
+  if(!(setequal(object@subsample[[1]]$SampleID, object@oesubsample$SampleID))){return("Incompatible objects")} else
     TRUE
 })
 
@@ -170,7 +170,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     
     cmmi <- melt(object@metrics, id.vars="SampleID")
     cmmi$variable <- as.character(cmmi$variable)
-    cmmi$replicate <- substr(cmmi$variable, nchar(match.arg(cmmi$variable, names, TRUE))+1, nchar(cmmi$variable))
+    cmmi$replicate <- sapply(strsplit(cmmi$variable, "_"), tail, 1)
     cmmi$metric <- match.arg(cmmi$variable, names, TRUE)
     cmmi$replicate[cmmi$replicate == ""] <- "Mean"
     cmmi <- cmmi[cmmi$replicate != "Mean", c("SampleID", "metric", "replicate", "value")]
@@ -188,7 +188,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
         result < 0, 0, result))
       result
     }, x$value, x$predicted_value, x$metric)
-    x$replicate <- as.numeric(x$replicate)
+    x$replicate <- suppressWarnings(as.numeric(x$replicate))
     x <- arrange(x[, c("StationCode", "SampleID", "metric", "replicate", "value", "predicted_value", "score")],
                  SampleID, metric, replicate)
     names(x)[names(x) == "replicate"] <- "Iteration"
