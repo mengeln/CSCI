@@ -12,4 +12,5 @@ License: GPL-3
 Depends:
     methods,
     randomForest,
+    reshape2,
     BMIMetrics,
