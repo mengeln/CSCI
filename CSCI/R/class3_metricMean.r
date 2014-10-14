@@ -195,7 +195,7 @@ setMethod("summary", "metricMean", function(object = "metricMean", report="all")
     reportlist <- add(x)
     names(reportlist)[length(reportlist)] <- "Suppl2_mmi"
   }
-  reportlist$core <- rename(reportlist$core, c("MMI_Score" = "MMI"))
+  reportlist$core <- plyr::rename(reportlist$core, c("MMI_Score" = "MMI"))
   if(length(reportlist)==1)transform(reportlist) else reportlist
 })
   
