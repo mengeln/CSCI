@@ -82,7 +82,7 @@ CSCI <- function (bugs, stations, rand = sample.int(10000, 1), purge = FALSE) {
   }
   
   names(bugs) <- csci_bugs_col[match(toupper(names(bugs)), toupper(csci_bugs_col))]
-  bugs <- ddply(bugs, names(bugs)[names(bugs) != "BAResult"], summarise,
+  bugs <- ddply(bugs, names(bugs)[names(bugs) != "BAResult"], plyr::summarise,
                 BAResult = sum(BAResult))
   
   caseFix <- data.frame(upper = c(toupper(csci_predictors), "AREA_SQKM", "STATIONCODE"), 

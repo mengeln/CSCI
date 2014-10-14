@@ -20,13 +20,13 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   colnames(object@bugdata)[which(colnames(object@bugdata) == "FinalID")] <- "Taxa"
   colnames(object@bugdata)[which(colnames(object@bugdata) == "BAResult")] <- "Result"
   object@oeresults <- ddply(object@bugdata, .(SampleID),
-                            summarize, Result = sum(Result))[, c("SampleID", "Result")]
+                            plyr::summarise, Result = sum(Result))[, c("SampleID", "Result")]
   names(object@oeresults)[2] <- "Count"
   ###Clean data###
   object@bugdata$Taxa <- str_trim(object@bugdata$Taxa)
   ##Aggregate taxa###
   object@bugdata <- ddply(object@bugdata, .(SampleID, StationCode, Taxa, LifeStageCode, Distinct),
-                          summarize, Result = sum(Result))
+                          plyr::summarise, Result = sum(Result))
 
   ###Match to STE###
   load(system.file("metadata.rdata", package="BMIMetrics"))
@@ -48,7 +48,7 @@ setMethod("nameMatch", "oe", function(object, effort = "SAFIT1__OTU_a"){
   names(object@ambiguous)[2:3] <- c("individuals", "taxa")
   object@bugdata <- object@bugdata[object@bugdata$STE != "Ambiguous",]
   object@bugdata <- ddply(object@bugdata, .(StationCode, SampleID, STE),
-                          summarize, Result = sum(Result))
+                          plyr::summarise, Result = sum(Result))
   return(object)
 })    
             
